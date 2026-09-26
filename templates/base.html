@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ site_settings.site_name }}{% endblock %}</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { vazir: ['Vazirmatn', 'sans-serif'] },
+        colors: {
+          brand: {
+            blue: {
+              50: '#eff8ff', 100: '#dbeffe', 200: '#bfe4fe', 300: '#93d3fd',
+              400: '#5fb8fa', 500: '#2e9ef0', 600: '#1a7fd6', 700: '#1866ad',
+              800: '#19558f', 900: '#1a4876', 950: '#132d4c',
+            },
+            yellow: {
+              50: '#fffdea', 100: '#fff9c5', 200: '#fff085', 300: '#ffe146',
+              400: '#ffcd1c', 500: '#f9ab08', 600: '#dd8104', 700: '#b75c07',
+              800: '#94480d', 900: '#7a3c0f',
+            }
+          }
+        },
+        animation: {
+          'float': 'float 6s ease-in-out infinite',
+          'fade-up': 'fadeUp 0.8s ease-out forwards',
+          'wiggle': 'wiggle 1.2s ease-in-out infinite',
+        },
+        keyframes: {
+          float: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-16px)' } },
+          fadeUp: { '0%': { opacity: 0, transform: 'translateY(40px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+          wiggle: { '0%,100%': { transform: 'rotate(-2deg)' }, '50%': { transform: 'rotate(2deg)' } },
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  body { font-family: 'Vazirmatn', sans-serif; }
+  .reveal { opacity: 0; transform: translateY(40px); transition: opacity .8s ease, transform .8s ease; }
+  .reveal.in-view { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: .1s; }
+  .reveal-delay-2 { transition-delay: .25s; }
+  .reveal-delay-3 { transition-delay: .4s; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #eff8ff; }
+  ::-webkit-scrollbar-thumb { background: #2e9ef0; border-radius: 10px; }
+  .gradient-text {
+    background: linear-gradient(90deg, #1a7fd6, #f9ab08);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .blob { border-radius: 60% 40% 55% 45% / 45% 55% 45% 55%; }
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800 overflow-x-hidden">
+
+<header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+      <a href="{% url 'main:home' %}" class="flex items-center gap-3 group">
+        {% if site_settings.logo %}
+          <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }}"
+               class="h-11 w-11 rounded-xl object-cover shadow-md group-hover:scale-105 transition-transform duration-300">
+        {% else %}
+          <div class="h-11 w-11 rounded-xl bg-gradient-to-br from-brand-blue-500 to-brand-yellow-400
+                      flex items-center justify-center text-white font-bold text-lg shadow-md
+                      group-hover:scale-105 transition-transform duration-300">
+            {{ site_settings.site_name|slice:":1" }}
+          </div>
+        {% endif %}
+        <div class="leading-tight">
+          <span class="block text-lg font-bold text-slate-800">{{ site_settings.site_name }}</span>
+          {% if site_settings.tagline %}
+            <span class="block text-xs text-slate-400">{{ site_settings.tagline }}</span>
+          {% endif %}
+        </div>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+        <a href="{% url 'sales:product_list' %}" class="hover:text-brand-blue-600 transition-colors">فروشگاه</a>
+        <a href="{% url 'main:home' %}#about" class="hover:text-brand-blue-600 transition-colors">درباره ما</a>
+        <a href="{% url 'main:home' %}#urgent" class="hover:text-brand-blue-600 transition-colors">پشتیبانی فوری</a>
+        <a href="{% url 'main:home' %}#tracking" class="hover:text-brand-blue-600 transition-colors">پیگیری سریع</a>
+        <a href="{% url 'main:home' %}#contact" class="hover:text-brand-blue-600 transition-colors">تماس با ما</a>
+      </nav>
+
+      {% if site_settings.urgent_support_phone %}
+      <a href="tel:{{ site_settings.urgent_support_phone }}"
+         class="hidden sm:inline-flex items-center gap-2 rounded-full bg-brand-yellow-400 hover:bg-brand-yellow-500
+                text-slate-900 font-bold px-5 py-2.5 shadow-md hover:shadow-lg transition-all duration-300
+                hover:-translate-y-0.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.57.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.49a1 1 0 011 1 11.36 11.36 0 00.57 3.57 1 1 0 01-.25 1.01l-2.2 2.21z"/>
+        </svg>
+        {{ site_settings.urgent_support_phone }}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<main>
+  {% if messages %}
+    <div class="max-w-3xl mx-auto px-4 pt-6">
+      {% for message in messages %}
+        <div class="rounded-xl bg-brand-blue-50 border border-brand-blue-200 text-brand-blue-800 px-4 py-3 mb-3">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="bg-slate-900 text-slate-300 mt-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        {% if site_settings.logo %}
+          <img src="{{ site_settings.logo.url }}" class="h-10 w-10 rounded-lg object-cover" alt="{{ site_settings.site_name }}">
+        {% endif %}
+        <span class="text-xl font-bold text-white">{{ site_settings.site_name }}</span>
+      </div>
+      <p class="text-sm leading-7 text-slate-400">{{ site_settings.tagline }}</p>
+    </div>
+    <div>
+      <h4 class="text-white font-semibold mb-4">اطلاعات تماس</h4>
+      <ul class="space-y-2 text-sm text-slate-400">
+        {% if site_settings.address %}<li>{{ site_settings.address }}</li>{% endif %}
+        {% if site_settings.phone %}<li>تلفن: {{ site_settings.phone }}</li>{% endif %}
+        {% if site_settings.email %}<li>ایمیل: {{ site_settings.email }}</li>{% endif %}
+        {% if site_settings.working_hours %}<li>ساعات کاری: {{ site_settings.working_hours }}</li>{% endif %}
+      </ul>
+    </div>
+    <div>
+      <h4 class="text-white font-semibold mb-4">دسترسی سریع</h4>
+      <ul class="space-y-2 text-sm">
+        <li><a href="{% url 'main:home' %}#tracking" class="hover:text-brand-yellow-400 transition-colors">پیگیری کیس تعمیر</a></li>
+        <li><a href="{% url 'main:home' %}#urgent" class="hover:text-brand-yellow-400 transition-colors">پشتیبانی فوری</a></li>
+        <li><a href="{% url 'admin:index' %}" class="hover:text-brand-yellow-400 transition-colors">ورود کارکنان</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-slate-800 py-5 text-center text-xs text-slate-500">
+    © {{ site_settings.site_name }} — تمامی حقوق محفوظ است.
+  </div>
+</footer>
+
+<script>
+  // انیمیشن ظاهر شدن هنگام اسکرول
+  document.addEventListener('DOMContentLoaded', () => {
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(el => observer.observe(el));
+  });
+</script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

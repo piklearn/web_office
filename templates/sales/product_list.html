@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}فروشگاه — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
+  <div class="reveal text-center mb-12">
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">فروشگاه</h1>
+    <p class="text-slate-500">کالاهای موجود را مشاهده و بررسی کنید.</p>
+  </div>
+
+  <!-- جستجو و فیلتر -->
+  <form method="get" class="reveal reveal-delay-1 mb-10 flex flex-col sm:flex-row gap-4">
+    <input type="text" name="q" value="{{ query }}" placeholder="جستجوی کالا..."
+           class="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-right
+                  focus:border-brand-blue-500 focus:ring-2 focus:ring-brand-blue-200 outline-none
+                  transition-all duration-300">
+
+    <select name="category" onchange="this.form.submit()"
+            class="rounded-xl border border-slate-300 px-4 py-3 text-right bg-white
+                   focus:border-brand-blue-500 focus:ring-2 focus:ring-brand-blue-200 outline-none
+                   transition-all duration-300">
+      <option value="">همه دسته‌بندی‌ها</option>
+      {% for cat in categories %}
+        <option value="{{ cat.slug }}" {% if current_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit" class="rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white
+                                  font-bold px-8 py-3 transition-all duration-300 hover:-translate-y-0.5">
+      جستجو
+    </button>
+  </form>
+
+  {% if products %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    {% for product in products %}
+    <a href="{{ product.get_absolute_url }}"
+       class="reveal group bg-white rounded-2xl overflow-hidden shadow-md shadow-slate-200/60 border border-slate-100
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col">
+      <div class="aspect-square bg-slate-100 overflow-hidden relative">
+        {% if product.image %}
+          <img src="{{ product.image.url }}" alt="{{ product.name }}"
+               class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
+        {% else %}
+          <div class="w-full h-full flex items-center justify-center text-slate-300">
+            <svg class="h-16 w-16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+            </svg>
+          </div>
+        {% endif %}
+        {% if not product.in_stock %}
+          <span class="absolute top-3 right-3 bg-slate-800/90 text-white text-xs font-bold px-3 py-1 rounded-full">ناموجود</span>
+        {% endif %}
+      </div>
+      <div class="p-5 flex flex-col flex-1">
+        {% if product.category %}
+          <span class="text-xs text-brand-blue-600 font-medium mb-1">{{ product.category.name }}</span>
+        {% endif %}
+        <h3 class="font-bold text-slate-800 mb-2 line-clamp-1">{{ product.name }}</h3>
+        {% if product.short_description %}
+          <p class="text-sm text-slate-500 mb-4 line-clamp-2 flex-1">{{ product.short_description }}</p>
+        {% endif %}
+        <div class="mt-auto flex items-center justify-between">
+          <span class="font-extrabold text-brand-blue-700">
+            {{ product.price|floatformat:0 }} {{ product.currency.symbol|default:product.currency.code }}
+          </span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- صفحه‌بندی -->
+  {% if is_paginated %}
+  <div class="reveal flex justify-center gap-2 mt-12">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+         class="rounded-xl border border-slate-300 px-4 py-2 hover:bg-brand-blue-50 transition-colors">قبلی</a>
+    {% endif %}
+    <span class="px-4 py-2 text-slate-500">صفحه {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}"
+         class="rounded-xl border border-slate-300 px-4 py-2 hover:bg-brand-blue-50 transition-colors">بعدی</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="reveal text-center bg-white rounded-3xl shadow-md shadow-slate-200/60 p-16 border border-slate-100">
+    <p class="text-slate-400">در حال حاضر کالایی برای نمایش وجود ندارد.</p>
+  </div>
+  {% endif %}
+
+</section>
+{% endblock %}

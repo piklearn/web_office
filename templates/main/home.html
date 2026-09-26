@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ site_settings.site_name }} — خانه{% endblock %}
+
+{% block content %}
+
+<!-- ================= HERO ================= -->
+<section class="relative overflow-hidden bg-gradient-to-b from-brand-blue-50 via-white to-white">
+  <!-- بلاب‌های تزئینی پس‌زمینه -->
+  <div class="absolute -top-24 -right-24 w-96 h-96 bg-brand-blue-200/40 blob animate-float"></div>
+  <div class="absolute top-40 -left-24 w-80 h-80 bg-brand-yellow-200/50 blob animate-float" style="animation-delay:1.5s"></div>
+
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 grid lg:grid-cols-2 gap-12 items-center">
+    <div class="reveal">
+      <span class="inline-block rounded-full bg-brand-yellow-100 text-brand-yellow-800 text-xs font-bold px-4 py-1.5 mb-6">
+        {{ site_settings.tagline|default:"همراه شما در هر مرحله" }}
+      </span>
+      <h1 class="text-4xl sm:text-5xl font-extrabold leading-tight text-slate-900 mb-6">
+        <span class="gradient-text">{{ site_settings.hero_title }}</span>
+      </h1>
+      <p class="text-lg text-slate-500 leading-8 mb-8 max-w-xl">
+        {{ site_settings.hero_subtitle|default:"برای دریافت پشتیبانی سریع یا پیگیری وضعیت دستگاه خود، کافیست پایین‌تر بروید." }}
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#tracking" class="inline-flex items-center gap-2 rounded-2xl bg-brand-blue-600 hover:bg-brand-blue-700
+                                    text-white font-bold px-7 py-3.5 shadow-lg shadow-brand-blue-600/20
+                                    hover:-translate-y-1 transition-all duration-300">
+          پیگیری سریع
+        </a>
+        
+      </div>
+    </div>
+
+    <!-- ================= ادمک انیمیشنی ================= -->
+    <div class="reveal reveal-delay-2 flex justify-center">
+      <svg viewBox="0 0 320 320" class="w-72 h-72 sm:w-80 sm:h-80 drop-shadow-xl">
+        <!-- سایه -->
+        <ellipse cx="160" cy="290" rx="80" ry="14" fill="#1a4876" opacity="0.08"/>
+
+        <!-- بدن -->
+        <g class="animate-float">
+          <!-- بازوها -->
+          <rect x="70" y="170" width="26" height="80" rx="13" fill="#2e9ef0"/>
+          <rect x="224" y="170" width="26" height="80" rx="13" fill="#2e9ef0"/>
+
+          <!-- بدنه -->
+          <rect x="95" y="140" width="130" height="120" rx="30" fill="#1a7fd6"/>
+          <rect x="115" y="160" width="90" height="16" rx="8" fill="#ffcd1c"/>
+
+          <!-- سر -->
+          <g class="mascot-head" style="transform-origin: 160px 95px; transition: transform .15s ease-out;">
+            <circle cx="160" cy="95" r="70" fill="#f9ab08"/>
+            <circle cx="160" cy="95" r="70" fill="url(#headGlow)" opacity="0.35"/>
+
+            <!-- گوش‌های آنتن‌مانند -->
+            <circle cx="98" cy="70" r="10" fill="#f9ab08"/>
+            <circle cx="222" cy="70" r="10" fill="#f9ab08"/>
+
+            <!-- چشم چپ -->
+            <g class="mascot-eye">
+              <circle cx="135" cy="95" r="20" fill="white"/>
+              <circle class="mascot-pupil" cx="135" cy="95" r="9" fill="#1a4876"/>
+            </g>
+            <!-- چشم راست -->
+            <g class="mascot-eye">
+              <circle cx="185" cy="95" r="20" fill="white"/>
+              <circle class="mascot-pupil" cx="185" cy="95" r="9" fill="#1a4876"/>
+            </g>
+
+            <!-- لبخند -->
+            <path d="M135 128 Q160 148 185 128" stroke="#7a3c0f" stroke-width="5" fill="none" stroke-linecap="round"/>
+          </g>
+        </g>
+
+        <defs>
+          <radialGradient id="headGlow" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- فلش اسکرول -->
+  <div class="flex justify-center pb-6">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-brand-blue-400 animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+    </svg>
+  </div>
+</section>
+
+<!-- ================= پشتیبانی فوری ================= -->
+<section id="urgent" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-10">
+  <div class="reveal bg-gradient-to-l from-brand-yellow-400 to-brand-yellow-300 rounded-3xl p-8 sm:p-10
+              shadow-xl shadow-brand-yellow-400/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+    <div class="text-center sm:text-right">
+      <h2 class="text-2xl font-extrabold text-slate-900 mb-2">{{ site_settings.urgent_support_title }}</h2>
+      <p class="text-slate-800/80 max-w-xl">{{ site_settings.urgent_support_text }}</p>
+    </div>
+    {% if site_settings.urgent_support_phone %}
+    <a href="tel:{{ site_settings.urgent_support_phone }}"
+       class="shrink-0 inline-flex items-center gap-3 bg-slate-900 hover:bg-slate-800 text-white
+              font-bold rounded-2xl px-7 py-4 shadow-lg hover:-translate-y-1 transition-all duration-300 animate-wiggle">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.57.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.49a1 1 0 011 1 11.36 11.36 0 00.57 3.57 1 1 0 01-.25 1.01l-2.2 2.21z"/>
+      </svg>
+      {{ site_settings.urgent_support_phone }}
+    </a>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ================= پیگیری سریع ================= -->
+<section id="tracking" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+  <div class="reveal text-center mb-10">
+    <h2 class="text-3xl font-extrabold text-slate-900 mb-3">پیگیری سریع کیس تعمیر</h2>
+    <p class="text-slate-500">کد پیگیری یا شماره تماسی که هنگام تحویل دستگاه ثبت کرده‌اید را وارد کنید.</p>
+  </div>
+
+  <form action="{% url 'support:track' %}" method="get"
+        class="reveal reveal-delay-1 bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-6 sm:p-8
+               flex flex-col sm:flex-row gap-4 border border-slate-100">
+    {{ tracking_form.query }}
+    <button type="submit"
+            class="shrink-0 rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white font-bold
+                   px-8 py-3 shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+      پیگیری
+    </button>
+  </form>
+</section>
+
+<!-- ================= درباره ما ================= -->
+{% if site_settings.about_text %}
+<section id="about" class="bg-brand-blue-50/60 py-24">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
+    <h2 class="text-3xl font-extrabold text-slate-900 mb-6">درباره‌ی ما</h2>
+    <p class="text-slate-600 leading-8 whitespace-pre-line">{{ site_settings.about_text }}</p>
+  </div>
+</section>
+{% endif %}
+
+<!-- ================= تماس با ما ================= -->
+<section id="contact" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+  <div class="reveal grid sm:grid-cols-3 gap-6 text-center">
+    <div class="bg-white rounded-2xl p-6 shadow-md shadow-slate-200/60 border border-slate-100
+                hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+      <div class="mx-auto mb-4 h-12 w-12 rounded-xl bg-brand-blue-100 flex items-center justify-center">
+        <svg class="h-6 w-6 text-brand-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-800 mb-1">آدرس</h3>
+      <p class="text-sm text-slate-500">{{ site_settings.address|default:"—" }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-6 shadow-md shadow-slate-200/60 border border-slate-100
+                hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+      <div class="mx-auto mb-4 h-12 w-12 rounded-xl bg-brand-yellow-100 flex items-center justify-center">
+        <svg class="h-6 w-6 text-brand-yellow-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-800 mb-1">تلفن</h3>
+      <p class="text-sm text-slate-500">{{ site_settings.phone|default:"—" }}</p>
+    </div>
+    <div class="bg-white rounded-2xl p-6 shadow-md shadow-slate-200/60 border border-slate-100
+                hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+      <div class="mx-auto mb-4 h-12 w-12 rounded-xl bg-brand-blue-100 flex items-center justify-center">
+        <svg class="h-6 w-6 text-brand-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <h3 class="font-bold text-slate-800 mb-1">ساعات کاری</h3>
+      <p class="text-sm text-slate-500">{{ site_settings.working_hours|default:"—" }}</p>
+    </div>
+  </div>
+
+  {% if site_settings.map_embed_url %}
+  <div class="reveal mt-10 rounded-3xl overflow-hidden shadow-xl">
+    <iframe src="{{ site_settings.map_embed_url }}" class="w-full h-80 border-0" loading="lazy"></iframe>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/mascot.js' %}"></script>
+{% endblock %}

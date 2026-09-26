@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load base_tags %}
+{% block title %}{{ product.name }} — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
+  <!-- مسیر بازگشت -->
+  <nav class="reveal text-sm text-slate-400 mb-8">
+    <a href="{% url 'sales:product_list' %}" class="hover:text-brand-blue-600 transition-colors">فروشگاه</a>
+    {% if product.category %}
+      <span class="mx-1">/</span>
+      <a href="{% url 'sales:product_list' %}?category={{ product.category.slug }}" class="hover:text-brand-blue-600 transition-colors">{{ product.category.name }}</a>
+    {% endif %}
+    <span class="mx-1">/</span>
+    <span class="text-slate-600">{{ product.name }}</span>
+  </nav>
+
+  <div class="grid lg:grid-cols-2 gap-12 mb-16">
+    <!-- تصویر -->
+    <div class="reveal">
+      <div class="aspect-square bg-slate-100 rounded-3xl overflow-hidden shadow-lg">
+        {% if product.image %}
+          <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-contain">
+        {% else %}
+          <div class="w-full h-full flex items-center justify-center text-slate-300">
+            <svg class="h-24 w-24" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+            </svg>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- اطلاعات اصلی -->
+    <div class="reveal reveal-delay-1">
+      {% if product.category %}
+        <span class="inline-block rounded-full bg-brand-blue-50 text-brand-blue-700 text-xs font-bold px-4 py-1.5 mb-4">
+          {{ product.category.name }}
+        </span>
+      {% endif %}
+      <h1 class="text-3xl font-extrabold text-slate-900 mb-3">{{ product.name }}</h1>
+      <p class="text-sm text-slate-400 mb-6">کد کالا: {{ product.sku }}</p>
+
+      {% if product.short_description %}
+        <p class="text-slate-600 leading-8 mb-6">{{ product.short_description }}</p>
+      {% endif %}
+
+      <div class="flex items-end gap-3 mb-2">
+        <span class="text-3xl font-extrabold gradient-text">
+          {{ product.price|floatformat:0|persian_intcomma }} {{ product.currency.symbol|default:product.currency.code }}
+        </span>
+      </div>
+      {% if product.currency.code != "IRT" %}
+        <p class="text-sm text-slate-400 mb-6">معادل تقریبی: {{ product.price_in_toman|floatformat:0|persian_intcomma }} تومان</p>
+      {% endif %}
+
+      <div class="mb-8">
+        {% if product.in_stock %}
+          <span class="inline-flex items-center gap-2 text-brand-blue-700 font-bold text-sm">
+            <span class="h-2.5 w-2.5 rounded-full bg-brand-blue-500"></span>
+            موجود در انبار ({{ product.stock }} عدد)
+          </span>
+        {% else %}
+          <span class="inline-flex items-center gap-2 text-slate-400 font-bold text-sm">
+            <span class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
+            ناموجود
+          </span>
+        {% endif %}
+      </div>
+
+      {% if site_settings.urgent_support_phone %}
+      <a href="tel:{{ site_settings.urgent_support_phone }}"
+         class="inline-flex items-center gap-2 rounded-2xl bg-brand-yellow-400 hover:bg-brand-yellow-500
+                text-slate-900 font-bold px-7 py-3.5 shadow-md hover:shadow-lg transition-all duration-300
+                hover:-translate-y-0.5">
+        تماس برای خرید: {{ site_settings.urgent_support_phone }}
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- توضیحات کامل -->
+  {% if product.description %}
+  <div class="reveal mb-16">
+    <h2 class="text-2xl font-extrabold text-slate-900 mb-5">توضیحات کالا</h2>
+    <div class="bg-white rounded-3xl shadow-md shadow-slate-200/60 border border-slate-100 p-8">
+      <p class="text-slate-600 leading-8 whitespace-pre-line">{{ product.description }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ویژگی‌ها -->
+  {% if product.features.all %}
+  <div class="reveal mb-16">
+    <h2 class="text-2xl font-extrabold text-slate-900 mb-5">ویژگی‌های فنی</h2>
+    <div class="bg-white rounded-3xl shadow-md shadow-slate-200/60 border border-slate-100 overflow-hidden">
+      {% for feature in product.features.all %}
+        <div class="flex items-center justify-between px-6 py-4 {% if not forloop.last %}border-b border-slate-100{% endif %}
+                    {% cycle 'bg-white' 'bg-slate-50/60' %}">
+          <span class="text-slate-500 font-medium">{{ feature.title }}</span>
+          <span class="text-slate-800 font-bold">{{ feature.value }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- کالاهای مرتبط -->
+  {% if related_products %}
+  <div class="reveal">
+    <h2 class="text-2xl font-extrabold text-slate-900 mb-5">کالاهای مرتبط</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+      {% for rp in related_products %}
+      <a href="{{ rp.get_absolute_url }}"
+         class="group bg-white rounded-2xl overflow-hidden shadow-md shadow-slate-200/60 border border-slate-100
+                hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+        <div class="aspect-square bg-slate-100 overflow-hidden">
+          {% if rp.image %}
+            <img src="{{ rp.image.url }}" alt="{{ rp.name }}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
+          {% endif %}
+        </div>
+        <div class="p-4">
+          <h3 class="font-bold text-sm text-slate-800 line-clamp-1">{{ rp.name }}</h3>
+          <span class="text-brand-blue-700 font-extrabold text-sm">{{ rp.price|floatformat:0 }} {{ rp.currency.symbol|default:rp.currency.code }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</section>
+{% endblock %}

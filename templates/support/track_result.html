@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}پیگیری کیس تعمیر — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+  <div class="text-center mb-10">
+    <h1 class="text-3xl font-extrabold text-slate-900 mb-3">نتیجه پیگیری</h1>
+    <p class="text-slate-500">وضعیت کیس تعمیر شما در اینجا نمایش داده می‌شود.</p>
+  </div>
+
+  <form method="get" class="bg-white rounded-3xl shadow-lg shadow-slate-200/60 p-6 sm:p-8
+                             flex flex-col sm:flex-row gap-4 border border-slate-100 mb-10">
+    {{ form.query }}
+    <button type="submit" class="shrink-0 rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white
+                                  font-bold px-8 py-3 transition-all duration-300 hover:-translate-y-0.5">
+      جستجو
+    </button>
+  </form>
+
+  {% if searched %}
+    {% if case %}
+      <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-8 border border-slate-100 animate-fade-up">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <span class="text-xs text-slate-400">کد پیگیری</span>
+            <p class="text-xl font-bold text-brand-blue-700">{{ case.tracking_code }}</p>
+          </div>
+          <span class="inline-flex items-center rounded-full bg-brand-yellow-100 text-brand-yellow-800
+                       font-bold text-sm px-4 py-1.5">
+            {{ case.get_status_display }}
+          </span>
+        </div>
+
+        <dl class="grid sm:grid-cols-2 gap-6 text-sm">
+          <div>
+            <dt class="text-slate-400 mb-1">نام مشتری</dt>
+            <dd class="font-medium text-slate-800">{{ case.customer_name }}</dd>
+          </div>
+          <div>
+            <dt class="text-slate-400 mb-1">نوع دستگاه</dt>
+            <dd class="font-medium text-slate-800">{{ case.get_device_type_display }}</dd>
+          </div>
+          <div>
+            <dt class="text-slate-400 mb-1">مدل دستگاه</dt>
+            <dd class="font-medium text-slate-800">{{ case.device_model|default:"—" }}</dd>
+          </div>
+          <div>
+            <dt class="text-slate-400 mb-1">تاریخ دریافت</dt>
+            <dd class="font-medium text-slate-800">{{ case.received_at|date:"Y/m/d - H:i" }}</dd>
+          </div>
+          <div class="sm:col-span-2">
+            <dt class="text-slate-400 mb-1">شرح مشکل</dt>
+            <dd class="font-medium text-slate-800">{{ case.problem_description }}</dd>
+          </div>
+          {% if case.estimated_cost %}
+          <div>
+            <dt class="text-slate-400 mb-1">هزینه تخمینی</dt>
+            <dd class="font-medium text-slate-800">{{ case.estimated_cost }} تومان</dd>
+          </div>
+          {% endif %}
+        </dl>
+      </div>
+    {% else %}
+      <div class="text-center bg-white rounded-3xl shadow-md shadow-slate-200/60 p-10 border border-slate-100">
+        <p class="text-slate-500">موردی با این مشخصات یافت نشد. لطفاً کد پیگیری یا شماره تماس را بررسی کنید.</p>
+      </div>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}
