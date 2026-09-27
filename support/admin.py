@@ -4,7 +4,6 @@ from sales.templatetags.date_tags import to_jalali
 from .models import RepairCase, AccompanyingItem
 from .widgets import CommaNumberInput
 
-
 class RepairCaseAdminForm(forms.ModelForm):
     class Meta:
         model = RepairCase
@@ -25,10 +24,10 @@ class AccompanyingItemInline(admin.TabularInline):
 class RepairCaseAdmin(admin.ModelAdmin):
     form = RepairCaseAdminForm
     list_display = ("tracking_code", "customer_name", "phone", "device_type",
-                     "status", "received_at_jalali", "updated_at")
+                     "status", "received_at_jalali", "updated_at_jalali")
     list_filter = ("status", "device_type", "received_at")
     search_fields = ("tracking_code", "customer_name", "phone", "device_model", "serial_number")
-    readonly_fields = ("tracking_code", "received_at_jalali", "updated_at")
+    readonly_fields = ("tracking_code", "received_at_jalali", "updated_at_jalali")
     list_editable = ("status",)
     date_hierarchy = "received_at"
     inlines = [AccompanyingItemInline]
@@ -49,8 +48,12 @@ class RepairCaseAdmin(admin.ModelAdmin):
     )
 
     def received_at_jalali(self, obj):
-        if not obj.received_at:
-            return "—"
-        return f"{to_jalali(obj.received_at)} - {obj.received_at.strftime('%H:%M')}"
+            return to_jalali(obj.received_at)
     received_at_jalali.short_description = "تاریخ دریافت"
     received_at_jalali.admin_order_field = "received_at"
+    
+    def updated_at_jalali(self, obj):
+        return to_jalali(obj.updated_at)
+
+    updated_at_jalali.short_description = "آخرین برروزرسانی"
+    updated_at_jalali.admin_order_field = "updated_at"
