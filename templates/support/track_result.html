@@ -61,6 +61,20 @@
           </div>
           {% endif %}
         </dl>
+
+        {% if case.accompanying_items.all %}
+        <div class="mt-8 pt-6 border-t border-slate-100">
+          <h3 class="text-sm font-bold text-slate-700 mb-3">اقلام همراه دستگاه</h3>
+          <ul class="space-y-2">
+            {% for item in case.accompanying_items.all %}
+              <li class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2.5 text-sm">
+                <span class="text-slate-700 font-medium">{{ item.name }}{% if item.note %} <span class="text-slate-400">({{ item.note }})</span>{% endif %}</span>
+                <span class="text-slate-500">تعداد: {{ item.quantity }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
       </div>
     {% else %}
       <div class="text-center bg-white rounded-3xl shadow-md shadow-slate-200/60 p-10 border border-slate-100">

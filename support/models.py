@@ -76,3 +76,25 @@ class RepairCase(models.Model):
         if not self.tracking_code:
             self.tracking_code = self.generate_tracking_code()
         super().save(*args, **kwargs)
+
+
+class AccompanyingItem(models.Model):
+    """
+    اقلامی که همراه دستگاه در حال تعمیر تحویل داده شده‌اند
+    (مثلاً کیف، شارژر، ماوس، کابل و ...)
+    """
+
+    case = models.ForeignKey(RepairCase, verbose_name="کیس تعمیر", on_delete=models.CASCADE,
+                              related_name="accompanying_items")
+    name = models.CharField("نام قلم", max_length=150,
+                             help_text="مثلاً: شارژر، کیف، ماوس، کابل برق")
+    quantity = models.PositiveIntegerField("تعداد", default=1)
+    note = models.CharField("توضیح (اختیاری)", max_length=200, blank=True,
+                             help_text="مثلاً: کمی فرسوده، رنگ مشکی")
+
+    class Meta:
+        verbose_name = "قلم همراه دستگاه"
+        verbose_name_plural = "اقلام همراه دستگاه"
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity})"

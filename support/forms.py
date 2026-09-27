@@ -1,5 +1,6 @@
 from django import forms
 from .models import RepairCase
+from .widgets import CommaNumberInput
 
 
 class TrackingForm(forms.Form):
@@ -27,6 +28,7 @@ class RepairCaseForm(forms.ModelForm):
         ]
         widgets = {
             "problem_description": forms.Textarea(attrs={"rows": 4}),
+            "estimated_cost": CommaNumberInput(),
         }
 
     def __init__(self, *args, **kwargs):

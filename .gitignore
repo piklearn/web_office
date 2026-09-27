@@ -1,1 +1,8 @@
 db.sqlite3
+__pycache__/
+*.py[cod]
+*.egg-info/
+media/
+staticfiles/
+.venv/
+venv/
