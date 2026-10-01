@@ -42,12 +42,32 @@
     </div>
   </div>
 
+  <div class="rounded-2xl border bg-white overflow-hidden mb-6">
   {% for sec in sections %}
-  <div class="dash-section {% if not sec.tasks %}is-empty{% endif %}">
-    <h2 class="font-bold {{ sec.cls }} mb-2">{{ sec.title }}</h2>
-    <div class="space-y-2 mb-6">{% for t in sec.tasks %}{% include "crm/_task_row.html" %}{% empty %}<p class="text-sm text-slate-400">موردی نیست.</p>{% endfor %}</div>
+<div class="dash-section {% if not sec.tasks %}is-empty{% endif %} mb-6">
+  <div class="flex items-center justify-between gap-3 mb-3 rounded-xl border px-4 py-2.5
+              {% if 'عقب' in sec.title %}bg-red-50 border-red-100
+              {% elif 'امروز' in sec.title %}bg-orange-50 border-orange-100
+              {% elif 'فردا' in sec.title %}bg-amber-50 border-amber-100
+              {% elif 'منتظر' in sec.title %}bg-sky-50 border-sky-100
+              {% else %}bg-slate-50 border-slate-100{% endif %}">
+    <h2 class="font-extrabold text-sm {{ sec.cls }} flex items-center gap-2">
+      {{ sec.title }}
+    </h2>
+    <span class="text-xs font-bold rounded-full bg-white border px-2.5 py-0.5 text-slate-600">
+      {{ sec.tasks|length }} مورد
+    </span>
   </div>
-  {% endfor %}
+  <div class="space-y-2">
+    {% for t in sec.tasks %}
+      {% include "crm/_task_row.html" %}
+    {% empty %}
+      <p class="text-sm text-slate-400 px-1">موردی نیست.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+</div>
 </section>
 {{ charts|json_script:"charts-data" }}
 {% endblock %}

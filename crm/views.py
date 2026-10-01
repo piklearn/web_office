@@ -18,7 +18,7 @@ from django.views.decorators.http import require_POST
 
 from .forms import (ContactForm, CustomerForm, CustomerSoftwareForm, PaymentForm,
                     RequestForm, TaskForm, TaskResultForm)
-from .models import (Customer, CustomerStatus, Payment, Request, Software, Task, TaskStatus,
+from .models import (Customer, CustomerStatus,CustomerSoftware , Payment, Request, Software, Task, TaskStatus,
                      can_see_finance, is_manager)
 
 JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
@@ -105,10 +105,10 @@ def dashboard(request):
         "values": [done_by_day.get(d, 0) for d in days]}
 
     sections = [
-        {"title": "🔴 عقب‌افتاده", "cls": "text-red-600", "tasks": overdue},
-        {"title": "🟠 امروز", "cls": "text-orange-500", "tasks": due_today},
-        {"title": "🟡 فردا", "cls": "text-yellow-600", "tasks": tomorrow},
-        {"title": "⏳ منتظر مشتری", "cls": "text-sky-600", "tasks": waiting},
+        {"title": " عقب‌افتاده", "cls": "text-red-600", "tasks": overdue},
+        {"title": "امروز", "cls": "text-orange-500", "tasks": due_today},
+        {"title": " فردا", "cls": "text-yellow-600", "tasks": tomorrow},
+        {"title": " منتظر مشتری", "cls": "text-sky-600", "tasks": waiting},
         {"title": "نیاز به پیگیری", "cls": "text-red-500", "tasks": needs},
     ]
     ctx = {
@@ -413,3 +413,27 @@ def reports(request):
         "monthly": monthly, "year_total": sum(r["sum"] for r in monthly),
         "debtors": debtors, "debt_total": debt_total,
         "conversion": conversion, "staff": staff, "manager": is_manager(request.user)})
+
+@login_required
+def software_edit(request, pk, spk):
+    customer = get_object_or_404(Customer, pk=pk)
+    obj = get_object_or_404(CustomerSoftware, pk=spk, customer=customer)
+    form = CustomerSoftwareForm(request.POST or None, instance=obj)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "نرم‌افزار به‌روز شد.")
+        return _done(request, redirect("crm:customer_detail", pk=customer.pk))
+    return _render_form(request, form, f"ویرایش نرم‌افزار — {customer}")
+
+
+@login_required
+@require_POST
+def software_delete(request, pk, spk):
+    customer = get_object_or_404(Customer, pk=pk)
+    obj = get_object_or_404(CustomerSoftware, pk=spk, customer=customer)
+    name = str(obj.software)
+    obj.delete()
+    messages.success(request, f"نرم‌افزار «{name}» حذف شد.")
+    if _is_htmx(request):
+        return HttpResponse(status=204, headers={"HX-Refresh": "true"})
+    return redirect("crm:customer_detail", pk=customer.pk)

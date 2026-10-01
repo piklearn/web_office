@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from .fields import JalaliDateField
 
 from support.widgets import CommaNumberInput
 from .models import (Customer, Contact, CustomerSoftware, Payment, Request, Task, TaskStatus)
@@ -18,6 +19,7 @@ class StyledForm(forms.ModelForm):
 
 
 class CustomerForm(StyledForm):
+    birth_date = JalaliDateField(label="تاریخ تولد", required=False)
     class Meta:
         model = Customer
         fields = ["full_name", "company_name", "national_id", "mobile", "landline",
@@ -42,6 +44,7 @@ class CustomerSoftwareForm(StyledForm):
 
 
 class PaymentForm(StyledForm):
+    date = JalaliDateField(label="تاریخ")
     class Meta:
         model = Payment
         fields = ["date", "amount", "method", "description"]
@@ -57,6 +60,7 @@ class RequestForm(StyledForm):
 
 
 class TaskForm(StyledForm):
+    due_date = JalaliDateField(label="موعد", required=False)
     class Meta:
         model = Task
         fields = ["title", "assignee", "due_date", "due_time"]
@@ -70,6 +74,7 @@ class TaskForm(StyledForm):
 
 class TaskResultForm(StyledForm):
     """ثبت نتیجهٔ پیگیری و تغییر وضعیت یا تعیین پیگیری بعدی."""
+    due_date = JalaliDateField(label="پیگیری بعدی (تاریخ)", required=False)
     class Meta:
         model = Task
         fields = ["status", "result", "result_note", "due_date", "due_time"]
