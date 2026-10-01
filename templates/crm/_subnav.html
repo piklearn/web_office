@@ -1,0 +1,8 @@
+{% with n=request.resolver_match.url_name %}
+<nav class="flex gap-1 mb-6 text-sm overflow-x-auto bg-white border rounded-2xl p-1">
+  <a href="{% url 'crm:dashboard' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'dashboard' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">داشبورد</a>
+  <a href="{% url 'crm:customer_list' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'customer_list' or n == 'customer_detail' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">مشتریان</a>
+  <a href="{% url 'crm:task_list' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'task_list' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">کارها</a>
+  {% if finance or manager %}<a href="{% url 'crm:reports' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'reports' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">گزارش‌ها</a>{% endif %}
+</nav>
+{% endwith %}

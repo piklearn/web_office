@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load date_tags crm_tags %}
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 py-10 space-y-6">
+  {% include "crm/_subnav.html" with finance=True %}
+  <h1 class="text-2xl font-extrabold">گزارش‌ها</h1>
+
+  <div class="bg-white rounded-2xl border p-5">
+    <div class="flex justify-between mb-3"><h2 class="font-bold">دریافتی ماهانه (۱۲ ماه اخیر)</h2><span class="text-sm text-slate-500">جمع: <b>{{ year_total|money }}</b></span></div>
+    <div class="space-y-2">
+      {% for m in monthly %}
+      <div class="flex items-center gap-3 text-sm">
+        <span class="w-28 shrink-0 text-slate-500">{{ m.label }}</span>
+        <div class="flex-1 h-3 rounded-full bg-slate-100 overflow-hidden"><div class="h-full bg-brand-blue-500" style="width: {{ m.pct }}%"></div></div>
+        <span class="w-28 shrink-0 text-left" dir="ltr">{{ m.sum|money }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border p-5">
+    <div class="flex justify-between mb-3"><h2 class="font-bold">مشتریان بدهکار</h2><span class="text-sm text-slate-500">جمع بدهی: <b class="text-red-600">{{ debt_total|money }}</b></span></div>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-xs text-slate-400"><tr class="text-right"><th class="py-2">مشتری</th><th>مبلغ کل</th><th>پرداخت‌شده</th><th>باقی‌مانده</th></tr></thead>
+      <tbody class="divide-y">
+        {% for c in debtors %}<tr><td class="py-2"><a class="text-brand-blue-700 font-bold" href="{% url 'crm:customer_detail' c.pk %}#payments">{{ c }}</a></td><td>{{ c.total_amount|money }}</td><td>{{ c.paid_sum|money }}</td><td class="text-red-600 font-bold">{{ c.remaining_sum|money }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="py-3 text-slate-400">بدهکاری وجود ندارد.</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+
+  <div class="bg-white rounded-2xl border p-5">
+    <h2 class="font-bold mb-3">نرخ تبدیل نرم‌افزارها</h2>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-xs text-slate-400"><tr class="text-right"><th class="py-2">نرم‌افزار</th><th>کل مشتریان</th><th>خریداری‌شده</th><th>نرخ تبدیل</th></tr></thead>
+      <tbody class="divide-y">
+        {% for r in conversion %}<tr><td class="py-2 font-bold">{{ r.name }}</td><td>{{ r.total }}</td><td>{{ r.bought }}</td><td>{{ r.rate }}٪</td></tr>
+        {% empty %}<tr><td colspan="4" class="py-3 text-slate-400">—</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+
+  {% if manager %}
+  <div class="bg-white rounded-2xl border p-5">
+    <h2 class="font-bold mb-3">عملکرد کارکنان</h2>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead class="text-xs text-slate-400"><tr class="text-right"><th class="py-2">کارمند</th><th>انجام‌شده (۳۰ روز)</th><th>باز</th><th>عقب‌افتاده</th></tr></thead>
+      <tbody class="divide-y">
+        {% for u in staff %}<tr><td class="py-2 font-bold">{{ u.get_full_name|default:u.get_username }}</td><td>{{ u.done }}</td><td>{{ u.open }}</td><td class="{% if u.overdue %}text-red-600 font-bold{% endif %}">{{ u.overdue }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="py-3 text-slate-400">—</td></tr>{% endfor %}
+      </tbody></table></div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

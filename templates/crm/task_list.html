@@ -1,10 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="max-w-4xl mx-auto px-4 py-10">
+  {% include "crm/_subnav.html" %}
   <h1 class="text-2xl font-extrabold mb-4">همهٔ کارهای باز</h1>
+  <div class="flex flex-wrap gap-2 mb-2 text-sm">
+    <a href="?{% if current %}status={{ current }}{% endif %}" class="rounded-lg px-3 py-1 border {% if not due %}bg-brand-blue-600 text-white{% endif %}">همهٔ موعدها</a>
+    <a href="?{% if current %}status={{ current }}&{% endif %}due=overdue" class="rounded-lg px-3 py-1 border {% if due == 'overdue' %}bg-red-600 text-white{% endif %}">عقب‌افتاده</a>
+    <a href="?{% if current %}status={{ current }}&{% endif %}due=today" class="rounded-lg px-3 py-1 border {% if due == 'today' %}bg-brand-blue-600 text-white{% endif %}">امروز</a>
+    <a href="?{% if current %}status={{ current }}&{% endif %}due=week" class="rounded-lg px-3 py-1 border {% if due == 'week' %}bg-brand-blue-600 text-white{% endif %}">۷ روز آینده</a>
+  </div>
   <div class="flex flex-wrap gap-2 mb-4 text-sm">
-    <a href="?" class="rounded-lg px-3 py-1 border {% if not current %}bg-brand-blue-600 text-white{% endif %}">همه</a>
-    {% for v, l in statuses %}<a href="?status={{ v }}" class="rounded-lg px-3 py-1 border {% if current == v %}bg-brand-blue-600 text-white{% endif %}">{{ l }}</a>{% endfor %}
+    <a href="?{% if due %}due={{ due }}{% endif %}" class="rounded-lg px-3 py-1 border {% if not current %}bg-brand-blue-600 text-white{% endif %}">همه</a>
+    {% for v, l in statuses %}<a href="?{% if due %}due={{ due }}&{% endif %}status={{ v }}" class="rounded-lg px-3 py-1 border {% if current == v %}bg-brand-blue-600 text-white{% endif %}">{{ l }}</a>{% endfor %}
   </div>
   <div class="space-y-2">{% for t in tasks %}{% include "crm/_task_row.html" %}{% empty %}<p class="text-slate-400">موردی نیست.</p>{% endfor %}</div>
 </section>

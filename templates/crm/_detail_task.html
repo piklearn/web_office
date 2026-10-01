@@ -1,0 +1,10 @@
+{% load date_tags crm_tags %}{% task_statuses as sts %}
+<div class="text-sm mt-2 pr-3 border-r-2 flex flex-wrap items-center gap-x-3 gap-y-1 {% if t.is_overdue %}border-red-400{% else %}border-slate-200{% endif %}">
+  <span class="{% if t.is_closed %}line-through text-slate-400{% endif %}">{{ t.title }}</span>
+  <span class="text-xs text-slate-500">{{ t.assignee|default:"—" }} · <span class="{% if t.is_overdue %}text-red-500 font-bold{% endif %}">{{ t.due_date|to_jalali }}</span></span>
+  <select aria-label="تغییر وضعیت" hx-post="{% url 'crm:task_status' t.pk %}" hx-vals='{"mode": "keep"}' hx-swap="none"
+          name="status" class="text-xs rounded-lg border px-2 py-1 {{ t.status|badge }}">
+    {% for v, l in sts %}<option value="{{ v }}" {% if t.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+  </select>
+  <button type="button" hx-get="{% url 'crm:task_update' t.pk %}" hx-target="#modal-root" class="text-xs text-brand-blue-700">ثبت نتیجه</button>
+</div>

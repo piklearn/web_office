@@ -1,0 +1,15 @@
+<div class="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+  <div class="absolute inset-0 bg-slate-900/50" onclick="closeModal()"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-extrabold">{{ title }}</h2>
+      <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-700 text-xl leading-none" aria-label="بستن">✕</button>
+    </div>
+    <form method="post" action="{{ action }}" hx-post="{{ action }}" hx-target="#modal-root" hx-swap="innerHTML" class="space-y-4">
+      {% csrf_token %}
+      {% include "crm/_form_fields.html" %}
+      <button class="w-full rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white font-bold py-3">ذخیره</button>
+    </form>
+    {{ form.media }}
+  </div>
+</div>

@@ -49,6 +49,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 # کانتکست‌پروسسور سراسری برای دسترسی به تنظیمات سایت در همه‌ی قالب‌ها
                 'main.context_processors.site_settings',
+                # شمارندهٔ یادآوری کارهای عقب‌افتاده / امروز برای کاربر واردشده
+                'crm.context_processors.crm_reminders',
             ],
         },
     },
@@ -87,3 +89,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/admin/login/'
 LOGIN_REDIRECT_URL = '/crm/'
+
+# ایمیل (برای دستور send_task_reminders). در حالت DEBUG ایمیل‌ها در کنسول چاپ می‌شوند.
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'crm@localhost'

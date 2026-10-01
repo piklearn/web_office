@@ -83,6 +83,7 @@ class Customer(models.Model):
         verbose_name = "مشتری"
         verbose_name_plural = "مشتریان"
         ordering = ["-created_at"]
+        indexes = [models.Index(fields=["status"], name="crm_customer_status_idx")]
 
     def __str__(self):
         return self.company_name or self.full_name
@@ -265,6 +266,7 @@ class Task(models.Model):
         verbose_name = "وظیفه / پیگیری"
         verbose_name_plural = "وظایف و پیگیری‌ها"
         ordering = ["due_date", "due_time"]
+        indexes = [models.Index(fields=["status", "due_date"], name="crm_task_status_due_idx")]
 
     def __str__(self):
         return f"{self.title} ({self.customer})"

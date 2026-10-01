@@ -1,71 +1,168 @@
 {% extends "base.html" %}
-{% load date_tags %}
+{% load date_tags crm_tags %}
 {% block content %}
-<section class="max-w-5xl mx-auto px-4 py-10 space-y-6">
-  <div class="bg-white rounded-2xl border p-5">
-    <div class="flex items-start justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-extrabold">{{ c }}</h1>
-        <p class="text-sm text-slate-500">{{ c.full_name }} · {{ c.get_status_display }} · مسئول: {{ c.owner|default:"—" }}</p>
+<section class="max-w-5xl mx-auto px-4 pb-10 pt-6 space-y-5">
+  {% include "crm/_subnav.html" %}
+
+  {# هدر ثابت مشتری #}
+  <div class="sticky top-20 z-40 bg-white/95 backdrop-blur rounded-2xl border shadow-sm p-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="h-12 w-12 shrink-0 rounded-full bg-brand-blue-100 text-brand-blue-700 text-lg font-extrabold flex items-center justify-center">{{ c|initial }}</div>
+        <div class="min-w-0">
+          <h1 class="text-xl font-extrabold truncate">{{ c }}</h1>
+          <p class="text-xs text-slate-500 truncate">{{ c.full_name }} · مسئول: {{ c.owner|default:"—" }}
+            <span class="rounded-full px-2 py-0.5 mr-1 {{ c.status|badge }}">{{ c.get_status_display }}</span></p>
+        </div>
       </div>
-      <a href="{% url 'crm:customer_edit' c.pk %}" class="text-sm rounded-lg border px-3 py-1">ویرایش</a>
-    </div>
-    <dl class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 text-sm">
-      <div><dt class="text-slate-400 text-xs">موبایل</dt><dd>{{ c.mobile|default:"—" }}</dd></div>
-      <div><dt class="text-slate-400 text-xs">تلفن ثابت</dt><dd>{{ c.landline|default:"—" }}</dd></div>
-      <div><dt class="text-slate-400 text-xs">کد ملی</dt><dd>{{ c.national_id|default:"—" }}</dd></div>
-      <div><dt class="text-slate-400 text-xs">تاریخ تولد</dt><dd>{{ c.birth_date|to_jalali }}</dd></div>
-      <div><dt class="text-slate-400 text-xs">نوع فعالیت</dt><dd>{{ c.activity_type|default:"—" }}</dd></div>
-      <div><dt class="text-slate-400 text-xs">تاریخ ثبت</dt><dd>{{ c.created_at|to_jalali }}</dd></div>
-      <div class="col-span-2 md:col-span-3"><dt class="text-slate-400 text-xs">آدرس</dt><dd>{{ c.address|default:"—" }}</dd></div>
-    </dl>
-    {% if c.description %}<p class="mt-3 text-sm text-slate-600">{{ c.description }}</p>{% endif %}
-  </div>
-
-  <div class="bg-white rounded-2xl border p-5">
-    <div class="flex justify-between mb-3"><h2 class="font-bold">درخواست‌ها و کارها</h2>
-      <div class="flex gap-2 text-xs"><a class="rounded-lg bg-brand-blue-600 text-white px-3 py-1" href="{% url 'crm:request_add' c.pk %}">+ درخواست</a>
-      <a class="rounded-lg border px-3 py-1" href="{% url 'crm:task_add' c.pk %}">+ کار</a></div></div>
-    {% for r in requests %}
-      <div class="border rounded-xl p-3 mb-2">
-        <div class="flex justify-between"><b>{{ r.subject }}</b>
-          <a class="text-xs text-brand-blue-700" href="{% url 'crm:task_add_for_request' c.pk r.pk %}">+ ایجاد کار</a></div>
-        <p class="text-xs text-slate-500">{{ r.created_at|to_jalali }} · {{ r.created_by|default:"—" }}</p>
-        {% if r.description %}<p class="text-sm mt-1">{{ r.description }}</p>{% endif %}
-        {% for t in r.tasks.all %}
-          <div class="text-sm mt-2 pr-3 border-r-2 {% if t.is_overdue %}border-red-400{% else %}border-slate-200{% endif %}">
-            {{ t.title }} — {{ t.get_status_display }} — {{ t.assignee|default:"—" }} — {{ t.due_date|to_jalali }}
-            <a class="text-xs text-brand-blue-700 mr-2" href="{% url 'crm:task_update' t.pk %}?next={{ request.path }}">ثبت نتیجه</a>
-          </div>
-        {% endfor %}
+      {% if finance %}
+      <div class="text-center">
+        <div class="text-[11px] text-slate-400">مبلغ باقی‌مانده</div>
+        <div class="font-extrabold {% if remaining > 0 %}text-red-600{% else %}text-emerald-600{% endif %}">{{ remaining|money }}</div>
       </div>
-    {% empty %}<p class="text-sm text-slate-400">درخواستی ثبت نشده.</p>{% endfor %}
-  </div>
-
-  <div class="grid md:grid-cols-2 gap-6">
-    <div class="bg-white rounded-2xl border p-5">
-      <div class="flex justify-between mb-3"><h2 class="font-bold">افراد تماس</h2><a class="text-xs rounded-lg border px-3 py-1" href="{% url 'crm:contact_add' c.pk %}">+ افزودن</a></div>
-      {% for p in contacts %}<p class="text-sm">{{ p.name }} {% if p.position %}({{ p.position }}){% endif %} — {{ p.phone }}</p>{% empty %}<p class="text-sm text-slate-400">—</p>{% endfor %}
-    </div>
-    <div class="bg-white rounded-2xl border p-5">
-      <div class="flex justify-between mb-3"><h2 class="font-bold">نرم‌افزارها</h2><a class="text-xs rounded-lg border px-3 py-1" href="{% url 'crm:software_add' c.pk %}">+ افزودن</a></div>
-      {% for s in softwares %}<p class="text-sm">{{ s.software }} — {% if s.is_purchased %}خریداری شده{% else %}در حال بررسی{% endif %} · {{ s.get_sale_status_display }}{% if s.drop_reason %} ({{ s.get_drop_reason_display }}){% endif %}</p>{% empty %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+      {% endif %}
+      <div class="flex flex-wrap gap-2 text-xs">
+        <button type="button" hx-get="{% url 'crm:task_add' c.pk %}" hx-target="#modal-root" class="rounded-lg bg-brand-blue-600 text-white px-3 py-2 font-bold">+ کار</button>
+        {% if finance %}<button type="button" hx-get="{% url 'crm:payment_add' c.pk %}" hx-target="#modal-root" class="rounded-lg bg-emerald-600 text-white px-3 py-2 font-bold">+ پرداخت</button>{% endif %}
+        <button type="button" hx-get="{% url 'crm:request_add' c.pk %}" hx-target="#modal-root" class="rounded-lg border px-3 py-2 font-bold">+ درخواست</button>
+        <a href="{% url 'crm:customer_edit' c.pk %}" class="rounded-lg border px-3 py-2">ویرایش</a>
+      </div>
     </div>
   </div>
 
-  {% if finance %}
-  <div class="bg-white rounded-2xl border p-5">
-    <div class="flex justify-between mb-3"><h2 class="font-bold">پرداخت‌ها — {{ c.get_payment_status_display }}</h2><a class="text-xs rounded-lg border px-3 py-1" href="{% url 'crm:payment_add' c.pk %}">+ ثبت پرداخت</a></div>
-    <p class="text-sm mb-2">مبلغ کل: {{ c.total_amount|floatformat:0 }} · پرداخت‌شده: {{ c.paid_total|floatformat:0 }} · <b class="text-red-600">باقی‌مانده: {{ c.remaining|floatformat:0 }}</b></p>
-    {% for p in payments %}<p class="text-xs text-slate-500">{{ p.date|to_jalali }} · {{ p.amount|floatformat:0 }} · {{ p.get_method_display }} · {{ p.description }}</p>{% endfor %}
+  {% if finance and remaining > 0 %}
+  <div class="rounded-2xl border {% if paid == 0 %}border-red-300 bg-red-50 text-red-800{% else %}border-amber-300 bg-amber-50 text-amber-800{% endif %} px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
+    <span>⚠️ این مشتری <b>{{ remaining|money }}</b> باقی‌مانده دارد{% if paid == 0 %} و هنوز پرداختی ثبت نشده{% endif %}.</span>
+    <button type="button" hx-get="{% url 'crm:payment_add' c.pk %}" hx-target="#modal-root" class="rounded-lg bg-white border px-3 py-1 font-bold">ثبت پرداخت</button>
   </div>
   {% endif %}
 
-  <div class="bg-white rounded-2xl border p-5">
-    <h2 class="font-bold mb-3">تاریخچه فعالیت‌ها</h2>
-    <ol class="space-y-2 border-r-2 border-slate-200 pr-4">
-      {% for a in activities %}<li class="text-sm"><span class="text-xs text-slate-400">{{ a.created_at|to_jalali }}</span><br>{{ a.text }}</li>{% endfor %}
-    </ol>
+  {# تب‌ها #}
+  <div class="flex gap-1 overflow-x-auto border-b text-sm" id="tab-bar" role="tablist">
+    <button type="button" data-tab="info" class="tab-btn px-4 py-2 whitespace-nowrap">اطلاعات اصلی</button>
+    <button type="button" data-tab="softwares" class="tab-btn px-4 py-2 whitespace-nowrap">نرم‌افزارها ({{ softwares|length }})</button>
+    {% if finance %}<button type="button" data-tab="payments" class="tab-btn px-4 py-2 whitespace-nowrap">پرداخت‌ها ({{ payments|length }})</button>{% endif %}
+    <button type="button" data-tab="tasks" class="tab-btn px-4 py-2 whitespace-nowrap">درخواست‌ها و کارها{% if open_tasks_count %} <span class="rounded-full bg-orange-100 text-orange-700 text-[11px] px-2">{{ open_tasks_count }}</span>{% endif %}</button>
+    <button type="button" data-tab="timeline" class="tab-btn px-4 py-2 whitespace-nowrap">تاریخچه</button>
+  </div>
+
+  {# ── اطلاعات اصلی ── #}
+  <div id="tab-info" class="tab-panel space-y-5">
+    <div class="bg-white rounded-2xl border p-5">
+      <dl class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+        <div><dt class="text-slate-400 text-xs">موبایل</dt><dd>{{ c.mobile|default:"—" }}</dd></div>
+        <div><dt class="text-slate-400 text-xs">تلفن ثابت</dt><dd>{{ c.landline|default:"—" }}</dd></div>
+        <div><dt class="text-slate-400 text-xs">کد ملی</dt><dd>{{ c.national_id|default:"—" }}</dd></div>
+        <div><dt class="text-slate-400 text-xs">تاریخ تولد</dt><dd>{{ c.birth_date|to_jalali }}</dd></div>
+        <div><dt class="text-slate-400 text-xs">نوع فعالیت</dt><dd>{{ c.activity_type|default:"—" }}</dd></div>
+        <div><dt class="text-slate-400 text-xs">تاریخ ثبت</dt><dd>{{ c.created_at|to_jalali }}</dd></div>
+        <div class="col-span-2 md:col-span-3"><dt class="text-slate-400 text-xs">آدرس</dt><dd>{{ c.address|default:"—" }}</dd></div>
+      </dl>
+      {% if c.description %}<p class="mt-3 text-sm text-slate-600">{{ c.description }}</p>{% endif %}
+    </div>
+    <div class="bg-white rounded-2xl border p-5">
+      <div class="flex justify-between mb-3"><h2 class="font-bold">افراد تماس</h2>
+        <button type="button" hx-get="{% url 'crm:contact_add' c.pk %}" hx-target="#modal-root" class="text-xs rounded-lg border px-3 py-1">+ افزودن</button></div>
+      {% for p in contacts %}<p class="text-sm py-1">{{ p.name }} {% if p.position %}({{ p.position }}){% endif %} — <span dir="ltr">{{ p.phone }}</span>{% if p.description %} · <span class="text-slate-400">{{ p.description }}</span>{% endif %}</p>{% empty %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+    </div>
+  </div>
+
+  {# ── نرم‌افزارها ── #}
+  <div id="tab-softwares" class="tab-panel hidden">
+    <div class="flex justify-between mb-3"><h2 class="font-bold">نرم‌افزارها</h2>
+      <button type="button" hx-get="{% url 'crm:software_add' c.pk %}" hx-target="#modal-root" class="text-xs rounded-lg border px-3 py-1">+ افزودن</button></div>
+    <div class="grid sm:grid-cols-2 gap-3">
+      {% for s in softwares %}
+      <div class="bg-white rounded-2xl border p-4">
+        <div class="flex items-center justify-between gap-2">
+          <b>{{ s.software }}</b>
+          <span class="text-xs rounded-full px-3 py-1 {{ s.sale_status|badge }}">{{ s.get_sale_status_display }}</span>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">{% if s.is_purchased %}✅ خریداری شده{% else %}در حال بررسی{% endif %}{% if s.drop_reason %} · دلیل انصراف: {{ s.get_drop_reason_display }}{% endif %}</p>
+        {% if s.note %}<p class="text-sm mt-1">{{ s.note }}</p>{% endif %}
+      </div>
+      {% empty %}<p class="text-sm text-slate-400">نرم‌افزاری ثبت نشده.</p>{% endfor %}
+    </div>
+  </div>
+
+  {# ── پرداخت‌ها ── #}
+  {% if finance %}
+  <div id="tab-payments" class="tab-panel hidden">
+    <div class="bg-white rounded-2xl border p-5">
+      <div class="flex justify-between mb-3"><h2 class="font-bold">پرداخت‌ها — {{ c.get_payment_status_display }}</h2>
+        <button type="button" hx-get="{% url 'crm:payment_add' c.pk %}" hx-target="#modal-root" class="text-xs rounded-lg bg-emerald-600 text-white px-3 py-1 font-bold">+ ثبت پرداخت</button></div>
+      <div class="grid grid-cols-3 gap-3 text-center text-sm mb-3">
+        <div><div class="text-xs text-slate-400">مبلغ کل</div><b>{{ total|money }}</b></div>
+        <div><div class="text-xs text-slate-400">پرداخت‌شده</div><b>{{ paid|money }}</b></div>
+        <div><div class="text-xs text-slate-400">باقی‌مانده</div><b class="{% if remaining > 0 %}text-red-600{% endif %}">{{ remaining|money }}</b></div>
+      </div>
+      {% if total > 0 %}<div class="h-2 rounded-full bg-slate-100 overflow-hidden mb-4"><div class="h-full bg-emerald-500" style="width: {{ paid_pct }}%"></div></div>{% endif %}
+      <div class="divide-y">
+        {% for p in payments %}<p class="text-sm py-2 flex flex-wrap gap-x-3"><span class="text-slate-400">{{ p.date|to_jalali }}</span><b>{{ p.amount|money }}</b><span>{{ p.get_method_display }}</span><span class="text-slate-500">{{ p.description }}</span></p>{% empty %}<p class="text-sm text-slate-400">پرداختی ثبت نشده.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── درخواست‌ها و کارها ── #}
+  <div id="tab-tasks" class="tab-panel hidden space-y-5">
+    <div class="bg-white rounded-2xl border p-5">
+      <div class="flex justify-between mb-3"><h2 class="font-bold">درخواست‌ها</h2>
+        <button type="button" hx-get="{% url 'crm:request_add' c.pk %}" hx-target="#modal-root" class="text-xs rounded-lg bg-brand-blue-600 text-white px-3 py-1">+ درخواست</button></div>
+      {% for r in requests %}
+        <div class="border rounded-xl p-3 mb-2">
+          <div class="flex justify-between"><b>{{ r.subject }}</b>
+            <button type="button" hx-get="{% url 'crm:task_add_for_request' c.pk r.pk %}" hx-target="#modal-root" class="text-xs text-brand-blue-700">+ ایجاد کار</button></div>
+          <p class="text-xs text-slate-500">{{ r.created_at|to_jalali }} · {{ r.created_by|default:"—" }}</p>
+          {% if r.description %}<p class="text-sm mt-1">{{ r.description }}</p>{% endif %}
+          {% for t in r.tasks.all %}{% include "crm/_detail_task.html" %}{% endfor %}
+        </div>
+      {% empty %}<p class="text-sm text-slate-400">درخواستی ثبت نشده.</p>{% endfor %}
+    </div>
+    <div class="bg-white rounded-2xl border p-5">
+      <div class="flex justify-between mb-3"><h2 class="font-bold">کارهای مستقل (بدون درخواست)</h2>
+        <button type="button" hx-get="{% url 'crm:task_add' c.pk %}" hx-target="#modal-root" class="text-xs rounded-lg border px-3 py-1">+ کار</button></div>
+      {% for t in standalone_tasks %}{% include "crm/_detail_task.html" %}{% empty %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+    </div>
+  </div>
+
+  {# ── تایم‌لاین ── #}
+  <div id="tab-timeline" class="tab-panel hidden">
+    <div class="bg-white rounded-2xl border p-5">
+      <ol class="relative border-r-2 border-slate-200 pr-6 space-y-5">
+        {% for a in activities %}
+        <li class="relative">
+          <span class="absolute -right-[2.1rem] top-0 h-7 w-7 rounded-full bg-white border-2 border-slate-200 flex items-center justify-center text-sm">{{ a.text|activity_icon }}</span>
+          <div class="text-sm">{{ a.text }}</div>
+          <div class="text-xs text-slate-400">{{ a.created_at|to_jalali }}{% if a.user %} · {{ a.user }}{% endif %}</div>
+        </li>
+        {% empty %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+      </ol>
+    </div>
   </div>
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    const btns = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.tab-panel');
+    function show(name) {
+      if (!document.getElementById('tab-' + name)) name = 'info';
+      panels.forEach(p => p.classList.toggle('hidden', p.id !== 'tab-' + name));
+      btns.forEach(b => {
+        const on = b.dataset.tab === name;
+        b.classList.toggle('border-b-2', on);
+        b.classList.toggle('border-brand-blue-600', on);
+        b.classList.toggle('text-brand-blue-700', on);
+        b.classList.toggle('font-bold', on);
+        b.classList.toggle('text-slate-500', !on);
+      });
+      history.replaceState(null, '', '#' + name);   // با رفرش (بعد از ثبت در مودال) همین تب باز می‌ماند
+    }
+    btns.forEach(b => b.addEventListener('click', () => show(b.dataset.tab)));
+    show(location.hash.slice(1) || 'info');
+  })();
+</script>
 {% endblock %}

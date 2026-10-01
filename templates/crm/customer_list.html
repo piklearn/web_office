@@ -1,31 +1,58 @@
 {% extends "base.html" %}
+{% load crm_tags %}
 {% block content %}
 <section class="max-w-5xl mx-auto px-4 py-10">
+  {% include "crm/_subnav.html" %}
   <div class="flex items-center justify-between mb-4">
     <h1 class="text-2xl font-extrabold">مشتریان</h1>
     <a href="{% url 'crm:customer_add' %}" class="rounded-xl bg-brand-blue-600 text-white px-4 py-2 text-sm font-bold">+ مشتری جدید</a>
   </div>
-  <form method="get" class="bg-white border rounded-2xl p-4 mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
-    <input name="q" value="{{ q }}" placeholder="نام، موبایل، کد ملی، شرکت، نرم‌افزار" class="md:col-span-2 rounded-xl border px-3 py-2">
+  <form method="get" action="{% url 'crm:customer_list' %}"
+        hx-get="{% url 'crm:customer_list' %}" hx-trigger="submit, input delay:400ms, change"
+        hx-target="#customer-results" hx-select="#customer-results" hx-swap="outerHTML" hx-push-url="true"
+        class="bg-white border rounded-2xl p-4 mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
+    <input name="q" value="{{ q }}" placeholder="نام، موبایل، کد ملی، شرکت، نرم‌افزار" autocomplete="off" class="md:col-span-2 rounded-xl border px-3 py-2">
     <select name="status" class="rounded-xl border px-3 py-2"><option value="">همهٔ وضعیت‌ها</option>
       {% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
     <select name="software" class="rounded-xl border px-3 py-2"><option value="">همهٔ نرم‌افزارها</option>
       {% for s in softwares %}<option value="{{ s.pk }}" {% if software == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
-    <select name="filter" class="rounded-xl border px-3 py-2 md:col-span-3"><option value="">فیلتر سریع</option>
-      <option value="new" {% if flt == "new" %}selected{% endif %}>مشتریان جدید</option>
-      <option value="open_requests" {% if flt == "open_requests" %}selected{% endif %}>دارای درخواست باز</option>
-      <option value="no_followup" {% if flt == "no_followup" %}selected{% endif %}>بدون پیگیری</option>
-      <option value="waiting" {% if flt == "waiting" %}selected{% endif %}>منتظر پاسخ</option>
-      {% if finance %}<option value="debtor" {% if flt == "debtor" %}selected{% endif %}>بدهکار</option>{% endif %}</select>
+    <select name="filter" class="rounded-xl border px-3 py-2 md:col-span-2"><option value="">فیلتر سریع</option>
+      {% for k, l in filters %}<option value="{{ k }}" {% if flt == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+    <select name="sort" class="rounded-xl border px-3 py-2">
+      {% for k, l in sorts %}<option value="{{ k }}" {% if sort == k %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
     <button class="rounded-xl bg-slate-800 text-white font-bold">جستجو</button>
   </form>
-  <div class="space-y-2">
-    {% for c in customers %}
-    <a href="{% url 'crm:customer_detail' c.pk %}" class="flex items-center justify-between bg-white rounded-xl border px-4 py-3 hover:border-brand-blue-400">
-      <div><div class="font-bold">{{ c }}</div><div class="text-xs text-slate-400">{{ c.full_name }} · {{ c.mobile }} · {{ c.get_status_display }}</div></div>
-      {% if c.open_tasks_count %}<span class="text-xs rounded-full bg-orange-100 text-orange-700 px-3 py-1">{{ c.open_tasks_count }} کار باز</span>{% endif %}
-    </a>
-    {% empty %}<p class="text-slate-400">موردی پیدا نشد.</p>{% endfor %}
+
+  <div id="customer-results">
+    {% if chips %}
+    <div class="flex flex-wrap gap-2 mb-3 text-xs">
+      {% for chip in chips %}<a href="{{ chip.url }}" class="inline-flex items-center gap-1 rounded-full bg-brand-blue-50 text-brand-blue-700 px-3 py-1 hover:bg-brand-blue-100">{{ chip.label }} <span aria-label="حذف">✕</span></a>{% endfor %}
+    </div>
+    {% endif %}
+    <p class="text-xs text-slate-400 mb-2">{{ page_obj.paginator.count }} مشتری</p>
+    <div class="space-y-2">
+      {% for c in customers %}
+      <a href="{% url 'crm:customer_detail' c.pk %}" class="flex items-center justify-between gap-3 bg-white rounded-xl border px-4 py-3 hover:border-brand-blue-400">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="h-10 w-10 shrink-0 rounded-full bg-brand-blue-100 text-brand-blue-700 font-bold flex items-center justify-center">{{ c|initial }}</div>
+          <div class="min-w-0"><div class="font-bold truncate">{{ c }}</div>
+            <div class="text-xs text-slate-400 truncate">{{ c.full_name }} · {{ c.mobile }}</div></div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          {% if finance and c.remaining_sum > 0 and c.total_amount > 0 %}<span class="text-xs rounded-full bg-red-100 text-red-700 px-3 py-1">بدهکار</span>{% endif %}
+          {% if c.open_tasks_count %}<span class="text-xs rounded-full bg-orange-100 text-orange-700 px-3 py-1">{{ c.open_tasks_count }} کار باز</span>{% endif %}
+          <span class="text-xs rounded-full px-3 py-1 {{ c.status|badge }}">{{ c.get_status_display }}</span>
+        </div>
+      </a>
+      {% empty %}<p class="text-slate-400">موردی پیدا نشد.</p>{% endfor %}
+    </div>
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-center gap-3 mt-5 text-sm">
+      {% if page_obj.has_previous %}<a class="rounded-lg border px-3 py-1" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.previous_page_number }}">قبلی</a>{% endif %}
+      <span class="text-slate-500">صفحهٔ {{ page_obj.number }} از {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a class="rounded-lg border px-3 py-1" href="?{% if base_qs %}{{ base_qs }}&{% endif %}page={{ page_obj.next_page_number }}">بعدی</a>{% endif %}
+    </div>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

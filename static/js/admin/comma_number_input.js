@@ -28,6 +28,13 @@
   }
 
   document.addEventListener("DOMContentLoaded", initAll);
+  // اگر اسکریپت دیرتر (مثلاً داخل مودال HTMX) بارگذاری شد، همین حالا اجرا شود
+  if (document.readyState !== "loading") initAll();
+  // محتوای تازه‌ای که HTMX وارد صفحه می‌کند
+  if (!window.__commaHtmxHook) {
+    window.__commaHtmxHook = true;
+    document.addEventListener("htmx:afterSwap", initAll);
+  }
 
   // پشتیبانی از فرم‌های Inline پنل ادمین جنگو که به‌صورت پویا اضافه می‌شوند
   document.addEventListener("formset:added", initAll);

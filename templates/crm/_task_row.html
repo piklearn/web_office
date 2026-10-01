@@ -1,13 +1,22 @@
-{% load date_tags %}
-<div class="flex items-center justify-between gap-3 bg-white rounded-xl border border-slate-100 px-4 py-3">
+{% load date_tags crm_tags %}{% task_statuses as sts %}
+<div id="task-{{ t.pk }}" class="task-row flex items-center justify-between gap-3 bg-white rounded-xl border px-4 py-3 {% if t.is_overdue %}border-red-200{% else %}border-slate-100{% endif %}">
   <div class="min-w-0">
     <a href="{% url 'crm:customer_detail' t.customer.pk %}" class="font-bold text-slate-800 hover:text-brand-blue-600">{{ t.customer }}</a>
     <div class="text-sm text-slate-600 truncate">{{ t.title }}</div>
     <div class="text-xs text-slate-400">
-      {{ t.get_status_display }} · موعد: {{ t.due_date|to_jalali }}{% if t.due_time %} {{ t.due_time|time:"H:i" }}{% endif %}
+      موعد: <span class="{% if t.is_overdue %}text-red-500 font-bold{% endif %}">{{ t.due_date|to_jalali }}{% if t.due_time %} {{ t.due_time|time:"H:i" }}{% endif %}</span>
       {% if manager %}· مسئول: {{ t.assignee|default:"—" }}{% endif %}
     </div>
   </div>
-  <a href="{% url 'crm:task_update' t.pk %}?next={{ request.path }}"
-     class="shrink-0 text-xs rounded-lg bg-brand-blue-50 text-brand-blue-700 px-3 py-2 font-bold hover:bg-brand-blue-100">ثبت نتیجه</a>
+  <div class="shrink-0 flex items-center gap-2">
+    <select name="status" aria-label="تغییر وضعیت"
+            hx-post="{% url 'crm:task_status' t.pk %}" hx-vals='{"mode": "row"}'
+            hx-target="closest .task-row" hx-swap="outerHTML"
+            class="text-xs rounded-lg border px-2 py-1.5 {{ t.status|badge }}">
+      {% for v, l in sts %}<option value="{{ v }}" {% if t.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+    </select>
+    <a href="{% url 'crm:task_update' t.pk %}?next={{ request.path }}"
+       hx-get="{% url 'crm:task_update' t.pk %}" hx-target="#modal-root"
+       class="text-xs rounded-lg bg-brand-blue-50 text-brand-blue-700 px-3 py-2 font-bold hover:bg-brand-blue-100">ثبت نتیجه</a>
+  </div>
 </div>
