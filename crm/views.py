@@ -18,8 +18,11 @@ from django.views.decorators.http import require_POST
 
 from .forms import (ContactForm, CustomerForm, CustomerSoftwareForm, PaymentForm,
                     RequestForm, TaskForm, TaskResultForm)
-from .models import (Customer, CustomerStatus,CustomerSoftware , Payment, Request, Software, Task, TaskStatus,
-                     can_see_finance, is_manager)
+from .models import (
+    Customer, CustomerStatus, Payment, Request, Software, Task, TaskStatus,
+    WorkGroup, can_see_finance, is_manager,
+    can_create_task, can_edit_task, can_delete_task, can_update_status,
+)
 
 JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
                  "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"]
@@ -53,8 +56,12 @@ def _safe_next(request, default="crm:dashboard"):
 
 
 def _visible_tasks(user):
-    qs = Task.objects.open().select_related("customer", "assignee")
-    return qs if is_manager(user) else qs.filter(assignee=user)
+    """کارهای باز قابل مشاهده. مدیر = همه؛ بقیه = همهٔ کارهای باز CRM."""
+    qs = Task.objects.open().select_related("customer", "assignee", "group")
+    if is_manager(user):
+        return qs
+    # طبق توافق: گروه‌های دیگر هم دیده می‌شوند
+    return qs
 
 
 def _all_visible_tasks(user):
@@ -146,9 +153,8 @@ def task_list(request):
 @login_required
 @require_POST
 def task_status(request, pk):
-    """تغییر سریع وضعیت کار از داخل لیست (HTMX)."""
-    task = get_object_or_404(Task.objects.select_related("customer", "assignee"), pk=pk)
-    if not is_manager(request.user) and task.assignee_id != request.user.id:
+    task = get_object_or_404(Task.objects.select_related("customer", "assignee", "group"), pk=pk)
+    if not can_update_status(request.user, task):
         raise PermissionDenied
     new_status = request.POST.get("status")
     if new_status not in TaskStatus.values:
@@ -334,7 +340,8 @@ def request_add(request, pk):
 
 @login_required
 def task_add(request, pk, request_pk=None):
-    """ایجاد Task برای مشتری (و در صورت وجود، برای یک درخواست مشخص)."""
+    if not can_create_task(request.user):
+        raise PermissionDenied
     customer = get_object_or_404(Customer, pk=pk)
     req = get_object_or_404(Request, pk=request_pk, customer=customer) if request_pk else None
     initial = {"title": req.subject, "assignee": request.user} if req else {"assignee": request.user}
@@ -343,15 +350,15 @@ def task_add(request, pk, request_pk=None):
         task = form.save(commit=False)
         task.customer, task.request, task.created_by = customer, req, request.user
         task.save()
+        form.save_m2m()  # لازم نیست مگر M2M روی فرم باشد
         messages.success(request, "کار ایجاد شد.")
         return _done(request, redirect("crm:customer_detail", pk=customer.pk))
     return _render_form(request, form, f"کار جدید — {customer}")
 
-
 @login_required
 def task_update(request, pk):
     task = get_object_or_404(Task, pk=pk)
-    if not is_manager(request.user) and task.assignee_id != request.user.id:
+    if not can_update_status(request.user, task):
         raise PermissionDenied
     form = TaskResultForm(request.POST or None, instance=task)
     if request.method == "POST" and form.is_valid():
@@ -360,7 +367,32 @@ def task_update(request, pk):
         return _done(request, _safe_next(request))
     return _render_form(request, form, f"ثبت نتیجه — {task.title}")
 
+@login_required
+@require_POST
+def task_delete(request, pk):
+    task = get_object_or_404(Task, pk=pk)
+    if not can_delete_task(request.user, task):
+        raise PermissionDenied
+    customer_pk = task.customer_id
+    task.delete()
+    messages.success(request, "کار حذف شد.")
+    if _is_htmx(request):
+        return HttpResponse(status=204, headers={"HX-Refresh": "true"})
+    return redirect("crm:customer_detail", pk=customer_pk)
 
+@login_required
+@require_POST
+def task_claim(request, pk):
+    task = get_object_or_404(Task, pk=pk, assignee__isnull=True)
+    if not is_manager(request.user):
+        if not task.group_id or not task.group.members.filter(pk=request.user.pk).exists():
+            raise PermissionDenied
+    task.assignee = request.user
+    task.save(update_fields=["assignee"])
+    messages.success(request, "کار به شما سپرده شد.")
+    if _is_htmx(request):
+        return HttpResponse(status=204, headers={"HX-Refresh": "true"})
+    return redirect(request.GET.get("next") or "crm:dashboard")
 # ───────────── گزارش‌ها ─────────────
 @login_required
 def reports(request):

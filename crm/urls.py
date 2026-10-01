@@ -20,6 +20,8 @@ urlpatterns = [
     path("customers/<int:pk>/task/", views.task_add, name="task_add"),
     path("customers/<int:pk>/request/<int:request_pk>/task/", views.task_add, name="task_add_for_request"),
     path("customers/<int:pk>/software/", views.software_add, name="software_add"),
-path("customers/<int:pk>/software/<int:spk>/edit/", views.software_edit, name="software_edit"),
-path("customers/<int:pk>/software/<int:spk>/delete/", views.software_delete, name="software_delete"),
+    path("customers/<int:pk>/software/<int:spk>/edit/", views.software_edit, name="software_edit"),
+    path("customers/<int:pk>/software/<int:spk>/delete/", views.software_delete, name="software_delete"),
+    path("tasks/<int:pk>/claim/", views.task_claim, name="task_claim"),
+    path("tasks/<int:pk>/delete/", views.task_delete, name="task_delete"),
 ]

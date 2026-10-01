@@ -3,12 +3,22 @@
   <div class="min-w-0">
     <a href="{% url 'crm:customer_detail' t.customer.pk %}" class="font-bold text-slate-800 hover:text-brand-blue-600">{{ t.customer }}</a>
     <div class="text-sm text-slate-600 truncate">{{ t.title }}</div>
-    <div class="text-xs text-slate-400">
-      موعد: <span class="{% if t.is_overdue %}text-red-500 font-bold{% endif %}">{{ t.due_date|to_jalali }}{% if t.due_time %} {{ t.due_time|time:"H:i" }}{% endif %}</span>
-      {% if manager %}· مسئول: {{ t.assignee|default:"—" }}{% endif %}
+    <div class="text-xs text-slate-400 flex flex-wrap gap-1 items-center mt-0.5">
+      <span>موعد: <span class="{% if t.is_overdue %}text-red-500 font-bold{% endif %}">{{ t.due_date|to_jalali }}{% if t.due_time %} {{ t.due_time|time:"H:i" }}{% endif %}</span></span>
+      {% if t.group %}<span class="rounded-full bg-slate-100 px-2 py-0.5">{{ t.group }}</span>{% endif %}
+      {% if t.assignee %}<span>· {{ t.assignee }}</span>
+      {% else %}<span class="text-amber-600">· بدون مسئول</span>{% endif %}
     </div>
   </div>
-  <div class="shrink-0 flex items-center gap-2">
+  <div class="shrink-0 flex items-center gap-2 flex-wrap justify-end">
+    {% if not t.assignee and t.group %}
+    <button type="button"
+            hx-post="{% url 'crm:task_claim' t.pk %}"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+            class="text-xs rounded-lg border border-brand-blue-200 text-brand-blue-700 px-2 py-1.5 font-bold">
+      به من بسپار
+    </button>
+    {% endif %}
     <select name="status" aria-label="تغییر وضعیت"
             hx-post="{% url 'crm:task_status' t.pk %}" hx-vals='{"mode": "row"}'
             hx-target="closest .task-row" hx-swap="outerHTML"

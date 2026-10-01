@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from .fields import JalaliDateField
 
 from support.widgets import CommaNumberInput
-from .models import (Customer, Contact, CustomerSoftware, Payment, Request, Task, TaskStatus)
+from .models import (Customer, WorkGroup, Contact, CustomerSoftware, Payment, Request, Task, TaskStatus)
 
 BASE = ("w-full rounded-xl border border-slate-300 px-4 py-2.5 text-right "
         "focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none")
@@ -63,14 +63,17 @@ class TaskForm(StyledForm):
     due_date = JalaliDateField(label="موعد", required=False)
     class Meta:
         model = Task
-        fields = ["title", "assignee", "due_date", "due_time"]
+        fields = ["title", "group", "assignee", "due_date", "due_time"]
         widgets = {"due_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
                    "due_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M")}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["group"].queryset = WorkGroup.objects.filter(is_active=True)
+        self.fields["group"].required = False
         self.fields["assignee"].queryset = get_user_model().objects.filter(is_active=True)
-
+        self.fields["assignee"].required = False
+        self.fields["assignee"].label = "مسئول (اختیاری)"
 
 class TaskResultForm(StyledForm):
     """ثبت نتیجهٔ پیگیری و تغییر وضعیت یا تعیین پیگیری بعدی."""

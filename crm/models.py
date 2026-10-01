@@ -42,7 +42,57 @@ def is_manager(user):
 def can_see_finance(user):
     return user.is_authenticated and get_role(user) in (Role.MANAGER, Role.SALES)
 
+def can_create_task(user):
+    if not user.is_authenticated:
+        return False
+    if is_manager(user):
+        return True
+    # هر کاربر فعال با پروفایل CRM بتواند کار بسازد؛ در صورت نیاز محدودتر کن
+    return True
 
+
+def can_edit_task(user, task):
+    """ویرایش کامل / حذف: فقط سازنده یا مدیر."""
+    if not user.is_authenticated:
+        return False
+    if is_manager(user):
+        return True
+    return task.created_by_id == user.id
+
+
+def can_delete_task(user, task):
+    return can_edit_task(user, task)
+
+
+def can_update_status(user, task):
+    """تغییر وضعیت / ثبت نتیجه."""
+    if not user.is_authenticated:
+        return False
+    if is_manager(user):
+        return True
+    if task.created_by_id == user.id:
+        return True
+    if task.assignee_id == user.id:
+        return True
+    # کار گروهی بدون مسئول: اعضای همان گروه
+    if task.assignee_id is None and task.group_id:
+        return task.group.members.filter(pk=user.pk).exists()
+    return False
+
+class WorkGroup(models.Model):
+    name = models.CharField("نام گروه", max_length=80, unique=True)
+    members = models.ManyToManyField(
+        User, verbose_name="اعضا", related_name="crm_groups", blank=True
+    )
+    is_active = models.BooleanField("فعال", default=True)
+
+    class Meta:
+        verbose_name = "گروه کاری"
+        verbose_name_plural = "گروه‌های کاری"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
 # ───────────── مشتری ─────────────
 class CustomerStatus(models.TextChoices):
     NEW = "new", "جدید"
@@ -261,6 +311,11 @@ class Task(models.Model):
     completed_at = models.DateTimeField("تاریخ اتمام", null=True, blank=True)
 
     objects = TaskQuerySet.as_manager()
+
+    group = models.ForeignKey(
+        WorkGroup, verbose_name="گروه کاری",
+        null=True, blank=True, on_delete=models.SET_NULL, related_name="tasks"
+    )
 
     class Meta:
         verbose_name = "وظیفه / پیگیری"

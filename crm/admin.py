@@ -3,6 +3,7 @@ from django.contrib import admin
 from sales.templatetags.date_tags import to_jalali
 from support.widgets import CommaNumberInput
 from django import forms
+from .models import WorkGroup
 
 from .models import (Activity, Contact, Customer, CustomerSoftware, EmployeeProfile,
                      Payment, Request, Software, Task, can_see_finance, is_manager)
@@ -110,3 +111,11 @@ class ActivityAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(WorkGroup)
+class WorkGroupAdmin(admin.ModelAdmin):
+    list_display = ("name", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name",)
+    filter_horizontal = ("members",)
