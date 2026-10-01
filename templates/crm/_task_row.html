@@ -1,0 +1,13 @@
+{% load date_tags %}
+<div class="flex items-center justify-between gap-3 bg-white rounded-xl border border-slate-100 px-4 py-3">
+  <div class="min-w-0">
+    <a href="{% url 'crm:customer_detail' t.customer.pk %}" class="font-bold text-slate-800 hover:text-brand-blue-600">{{ t.customer }}</a>
+    <div class="text-sm text-slate-600 truncate">{{ t.title }}</div>
+    <div class="text-xs text-slate-400">
+      {{ t.get_status_display }} · موعد: {{ t.due_date|to_jalali }}{% if t.due_time %} {{ t.due_time|time:"H:i" }}{% endif %}
+      {% if manager %}· مسئول: {{ t.assignee|default:"—" }}{% endif %}
+    </div>
+  </div>
+  <a href="{% url 'crm:task_update' t.pk %}?next={{ request.path }}"
+     class="shrink-0 text-xs rounded-lg bg-brand-blue-50 text-brand-blue-700 px-3 py-2 font-bold hover:bg-brand-blue-100">ثبت نتیجه</a>
+</div>

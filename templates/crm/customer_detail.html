@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load date_tags %}
+{% block content %}
+<section class="max-w-5xl mx-auto px-4 py-10 space-y-6">
+  <div class="bg-white rounded-2xl border p-5">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-extrabold">{{ c }}</h1>
+        <p class="text-sm text-slate-500">{{ c.full_name }} · {{ c.get_status_display }} · مسئول: {{ c.owner|default:"—" }}</p>
+      </div>
+      <a href="{% url 'crm:customer_edit' c.pk %}" class="text-sm rounded-lg border px-3 py-1">ویرایش</a>
+    </div>
+    <dl class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 text-sm">
+      <div><dt class="text-slate-400 text-xs">موبایل</dt><dd>{{ c.mobile|default:"—" }}</dd></div>
+      <div><dt class="text-slate-400 text-xs">تلفن ثابت</dt><dd>{{ c.landline|default:"—" }}</dd></div>
+      <div><dt class="text-slate-400 text-xs">کد ملی</dt><dd>{{ c.national_id|default:"—" }}</dd></div>
+      <div><dt class="text-slate-400 text-xs">تاریخ تولد</dt><dd>{{ c.birth_date|to_jalali }}</dd></div>
+      <div><dt class="text-slate-400 text-xs">نوع فعالیت</dt><dd>{{ c.activity_type|default:"—" }}</dd></div>
+      <div><dt class="text-slate-400 text-xs">تاریخ ثبت</dt><dd>{{ c.created_at|to_jalali }}</dd></div>
+      <div class="col-span-2 md:col-span-3"><dt class="text-slate-400 text-xs">آدرس</dt><dd>{{ c.address|default:"—" }}</dd></div>
+    </dl>
+    {% if c.description %}<p class="mt-3 text-sm text-slate-600">{{ c.description }}</p>{% endif %}
+  </div>
+
+  <div class="bg-white rounded-2xl border p-5">
+    <div class="flex justify-between mb-3"><h2 class="font-bold">درخواست‌ها و کارها</h2>
+      <div class="flex gap-2 text-xs"><a class="rounded-lg bg-brand-blue-600 text-white px-3 py-1" href="{% url 'crm:request_add' c.pk %}">+ درخواست</a>
+      <a class="rounded-lg border px-3 py-1" href="{% url 'crm:task_add' c.pk %}">+ کار</a></div></div>
+    {% for r in requests %}
+      <div class="border rounded-xl p-3 mb-2">
+        <div class="flex justify-between"><b>{{ r.subject }}</b>
+          <a class="text-xs text-brand-blue-700" href="{% url 'crm:task_add_for_request' c.pk r.pk %}">+ ایجاد کار</a></div>
+        <p class="text-xs text-slate-500">{{ r.created_at|to_jalali }} · {{ r.created_by|default:"—" }}</p>
+        {% if r.description %}<p class="text-sm mt-1">{{ r.description }}</p>{% endif %}
+        {% for t in r.tasks.all %}
+          <div class="text-sm mt-2 pr-3 border-r-2 {% if t.is_overdue %}border-red-400{% else %}border-slate-200{% endif %}">
+            {{ t.title }} — {{ t.get_status_display }} — {{ t.assignee|default:"—" }} — {{ t.due_date|to_jalali }}
+            <a class="text-xs text-brand-blue-700 mr-2" href="{% url 'crm:task_update' t.pk %}?next={{ request.path }}">ثبت نتیجه</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% empty %}<p class="text-sm text-slate-400">درخواستی ثبت نشده.</p>{% endfor %}
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-2xl border p-5">
+      <div class="flex justify-between mb-3"><h2 class="font-bold">افراد تماس</h2><a class="text-xs rounded-lg border px-3 py-1" href="{% url 'crm:contact_add' c.pk %}">+ افزودن</a></div>
+      {% for p in contacts %}<p class="text-sm">{{ p.name }} {% if p.position %}({{ p.position }}){% endif %} — {{ p.phone }}</p>{% empty %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+    </div>
+    <div class="bg-white rounded-2xl border p-5">
+      <div class="flex justify-between mb-3"><h2 class="font-bold">نرم‌افزارها</h2><a class="text-xs rounded-lg border px-3 py-1" href="{% url 'crm:software_add' c.pk %}">+ افزودن</a></div>
+      {% for s in softwares %}<p class="text-sm">{{ s.software }} — {% if s.is_purchased %}خریداری شده{% else %}در حال بررسی{% endif %} · {{ s.get_sale_status_display }}{% if s.drop_reason %} ({{ s.get_drop_reason_display }}){% endif %}</p>{% empty %}<p class="text-sm text-slate-400">—</p>{% endfor %}
+    </div>
+  </div>
+
+  {% if finance %}
+  <div class="bg-white rounded-2xl border p-5">
+    <div class="flex justify-between mb-3"><h2 class="font-bold">پرداخت‌ها — {{ c.get_payment_status_display }}</h2><a class="text-xs rounded-lg border px-3 py-1" href="{% url 'crm:payment_add' c.pk %}">+ ثبت پرداخت</a></div>
+    <p class="text-sm mb-2">مبلغ کل: {{ c.total_amount|floatformat:0 }} · پرداخت‌شده: {{ c.paid_total|floatformat:0 }} · <b class="text-red-600">باقی‌مانده: {{ c.remaining|floatformat:0 }}</b></p>
+    {% for p in payments %}<p class="text-xs text-slate-500">{{ p.date|to_jalali }} · {{ p.amount|floatformat:0 }} · {{ p.get_method_display }} · {{ p.description }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="bg-white rounded-2xl border p-5">
+    <h2 class="font-bold mb-3">تاریخچه فعالیت‌ها</h2>
+    <ol class="space-y-2 border-r-2 border-slate-200 pr-4">
+      {% for a in activities %}<li class="text-sm"><span class="text-xs text-slate-400">{{ a.created_at|to_jalali }}</span><br>{{ a.text }}</li>{% endfor %}
+    </ol>
+  </div>
+</section>
+{% endblock %}
