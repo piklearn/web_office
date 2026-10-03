@@ -62,3 +62,18 @@ class SiteSettings(models.Model):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class UserAvatar(models.Model):
+    """انتخاب تصویر پروفایل پیش‌فرض هر کاربر."""
+
+    user = models.OneToOneField("auth.User", verbose_name="کاربر",
+                                on_delete=models.CASCADE, related_name="avatar_choice")
+    avatar = models.CharField("تصویر پروفایل", max_length=20)
+
+    class Meta:
+        verbose_name = "تصویر پروفایل کاربر"
+        verbose_name_plural = "تصویر پروفایل کاربران"
+
+    def __str__(self):
+        return f"{self.user} — {self.avatar}"

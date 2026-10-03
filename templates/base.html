@@ -60,6 +60,8 @@
     background-clip: text;
     color: transparent;
   }
+  #profile-panel { display: none; }
+  #profile-menu:hover #profile-panel, #profile-menu.open #profile-panel { display: block; }
   .blob { border-radius: 60% 40% 55% 45% / 45% 55% 45% 55%; }
 </style>
 <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
@@ -91,7 +93,6 @@
 
       <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
         <a href="{% url 'sales:product_list' %}" class="hover:text-brand-blue-600 transition-colors">فروشگاه</a>
-        {% if user.is_authenticated %}<a href="{% url 'crm:dashboard' %}" class="text-brand-blue-700 font-bold hover:text-brand-blue-600 transition-colors">پنل CRM{% if crm_overdue_count %}<span class="mr-1 rounded-full bg-red-500 text-white text-[10px] px-1.5 py-0.5" title="کار عقب‌افتاده">{{ crm_overdue_count }}</span>{% elif crm_today_count %}<span class="mr-1 rounded-full bg-orange-400 text-white text-[10px] px-1.5 py-0.5" title="کار امروز">{{ crm_today_count }}</span>{% endif %}</a>{% endif %}
         <a href="{% url 'main:home' %}#about" class="hover:text-brand-blue-600 transition-colors">درباره ما</a>
         <a href="{% url 'main:home' %}#urgent" class="hover:text-brand-blue-600 transition-colors">پشتیبانی فوری</a>
         <a href="{% url 'main:home' %}#tracking" class="hover:text-brand-blue-600 transition-colors">پیگیری سریع</a>
@@ -109,6 +110,45 @@
           </svg>
           {{ site_settings.urgent_support_phone }}
         </a>
+        {% endif %}
+
+        {% load avatar_tags %}
+        {% if user.is_authenticated %}
+        <div id="profile-menu" class="relative">
+          <button id="profile-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="منوی کاربر"
+                  class="block h-11 w-11 rounded-full overflow-hidden ring-2 ring-brand-yellow-400 hover:ring-4 transition-all">
+            <img src="{% avatar_src user %}" alt="" class="h-full w-full object-cover">
+          </button>
+          <div id="profile-panel" class="absolute left-0 top-full pt-2 w-64 z-50">
+            <div class="rounded-2xl bg-white border border-slate-100 shadow-xl p-2">
+              <div class="px-3 py-3 border-b border-slate-100 mb-1">
+                <span class="block font-bold text-slate-800">{{ user.get_full_name|default:user.username }}</span>
+                <span class="block text-xs text-slate-400">وارد شده‌اید</span>
+              </div>
+              <a href="{% url 'crm:dashboard' %}" class="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm text-slate-700 hover:bg-brand-blue-50 hover:text-brand-blue-700 transition-colors">
+                <span>ورود به داشبورد</span>
+                {% if crm_overdue_count %}<span class="rounded-full bg-red-500 text-white text-[10px] px-1.5 py-0.5" title="کار عقب‌افتاده">{{ crm_overdue_count }}</span>{% elif crm_today_count %}<span class="rounded-full bg-orange-400 text-white text-[10px] px-1.5 py-0.5" title="کار امروز">{{ crm_today_count }}</span>{% endif %}
+              </a>
+              <form method="post" action="{% url 'main:set_avatar' %}" class="flex items-center gap-2 px-3 py-2.5">
+                {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <span class="text-xs text-slate-400 ml-1">تصویر:</span>
+                {% avatar_choices as choices %}
+                {% for a in choices %}
+                <button type="submit" name="avatar" value="{{ a.key }}" title="{{ a.name }}" aria-label="{{ a.name }}"
+                        class="h-8 w-8 rounded-full overflow-hidden ring-1 ring-slate-200 hover:ring-2 hover:ring-brand-yellow-400">
+                  <img src="{% avatar_src user a.key %}" alt="" class="h-full w-full">
+                </button>
+                {% endfor %}
+              </form>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-right rounded-xl px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">خروج از حساب</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <a href="{% url 'login' %}" class="inline-flex items-center rounded-full bg-brand-blue-600 hover:bg-brand-blue-700 text-white font-bold px-5 py-2.5 transition-colors">ورود</a>
         {% endif %}
 
         <!-- دکمه منوی همبرگری - فقط در موبایل و تبلت نمایش داده می‌شود -->
@@ -133,8 +173,6 @@
       <div class="flex flex-col gap-1 pt-2 border-t border-slate-100">
         <a href="{% url 'sales:product_list' %}"
            class="rounded-xl px-4 py-3 text-slate-600 font-medium hover:bg-brand-blue-50 hover:text-brand-blue-700 transition-colors">فروشگاه</a>
-        {% if user.is_authenticated %}<a href="{% url 'crm:dashboard' %}"
-           class="rounded-xl px-4 py-3 text-brand-blue-700 font-bold hover:bg-brand-blue-50 transition-colors">پنل CRM{% if crm_overdue_count %}<span class="mr-1 rounded-full bg-red-500 text-white text-[10px] px-1.5 py-0.5" title="کار عقب‌افتاده">{{ crm_overdue_count }}</span>{% elif crm_today_count %}<span class="mr-1 rounded-full bg-orange-400 text-white text-[10px] px-1.5 py-0.5" title="کار امروز">{{ crm_today_count }}</span>{% endif %}</a>{% endif %}
         <a href="{% url 'main:home' %}#about"
            class="rounded-xl px-4 py-3 text-slate-600 font-medium hover:bg-brand-blue-50 hover:text-brand-blue-700 transition-colors">درباره ما</a>
         <a href="{% url 'main:home' %}#urgent"
@@ -209,6 +247,19 @@
       });
     }, { threshold: 0.15 });
     revealEls.forEach(el => observer.observe(el));
+
+    // منوی پروفایل: باز/بسته با کلیک (هاور هم با CSS کار می‌کند)
+    const pMenu = document.getElementById('profile-menu');
+    const pBtn = document.getElementById('profile-btn');
+    if (pMenu && pBtn) {
+      pBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        const open = pMenu.classList.toggle('open');
+        pBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', e => { if (!pMenu.contains(e.target)) pMenu.classList.remove('open'); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') pMenu.classList.remove('open'); });
+    }
 
     // باز/بسته کردن منوی موبایل
     const menuButton = document.getElementById('mobile-menu-button');
