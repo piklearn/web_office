@@ -3,9 +3,28 @@
 {% block content %}
 <section class="max-w-5xl mx-auto px-4 py-10">
   {% include "crm/_subnav.html" %}
-  <div class="flex items-center justify-between mb-4">
+  <div class="flex items-center justify-between mb-4 gap-2 flex-wrap">
     <h1 class="text-2xl font-extrabold">مشتریان</h1>
-    <a href="{% url 'crm:customer_add' %}" class="rounded-xl bg-brand-blue-600 text-white px-4 py-2 text-sm font-bold">+ مشتری جدید</a>
+    <div class="flex items-center gap-2">
+      <!-- منوی ورود/خروج داده: جدا از منوی اصلی CRM، فقط همین‌جا کنار لیست مشتریان -->
+      <details class="relative">
+        <summary class="list-none cursor-pointer rounded-xl border px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 select-none">
+          خروجی Excel ▾
+        </summary>
+        <div class="absolute left-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-20 overflow-hidden text-sm">
+          <a href="{% url 'crm:customer_export' %}?kind=raw" class="block px-4 py-2.5 hover:bg-slate-50">خام</a>
+          {% if finance %}
+            <a href="{% url 'crm:customer_export' %}?kind=full" class="block px-4 py-2.5 hover:bg-slate-50 border-t">کامل</a>
+          {% endif %}
+        </div>
+      </details>
+      {% if finance %}
+      <a href="{% url 'crm:customer_import' %}" class="rounded-xl border px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
+        ورود از Excel
+      </a>
+      {% endif %}
+      <a href="{% url 'crm:customer_add' %}" class="rounded-xl bg-brand-blue-600 text-white px-4 py-2 text-sm font-bold">+ مشتری جدید</a>
+    </div>
   </div>
   <form method="get" action="{% url 'crm:customer_list' %}"
         hx-get="{% url 'crm:customer_list' %}" hx-trigger="submit, input delay:400ms, change"

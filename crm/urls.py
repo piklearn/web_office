@@ -24,4 +24,7 @@ urlpatterns = [
     path("customers/<int:pk>/software/<int:spk>/delete/", views.software_delete, name="software_delete"),
     path("tasks/<int:pk>/claim/", views.task_claim, name="task_claim"),
     path("tasks/<int:pk>/delete/", views.task_delete, name="task_delete"),
+    path("customers/export/", views.customer_export, name="customer_export"),
+    path("customers/import/", views.customer_import, name="customer_import"),
+    path("customers/import/template/", views.customer_import_template, name="customer_import_template"),
 ]

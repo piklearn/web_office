@@ -16,6 +16,8 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from .excel import (apply_import, build_full_workbook, build_raw_workbook,
+                    build_template_workbook, parse_import_file)
 from .forms import (ContactForm, CustomerForm, CustomerSoftwareForm, PaymentForm,
                     RequestForm, TaskForm, TaskResultForm)
 from .models import (
@@ -469,3 +471,76 @@ def software_delete(request, pk, spk):
     if _is_htmx(request):
         return HttpResponse(status=204, headers={"HX-Refresh": "true"})
     return redirect("crm:customer_detail", pk=customer.pk)
+
+
+# ───────────── ورود / خروج داده (اکسل) ─────────────
+def _xlsx_response(workbook, filename):
+    resp = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+    workbook.save(resp)
+    return resp
+
+
+@login_required
+def customer_export(request):
+    """خروجی اکسل: kind=raw (برای هرکسی که حق ایجاد مشتری دارد) یا kind=full (فقط مالی/مدیر)."""
+    kind = request.GET.get("kind", "raw")
+    today = timezone.localdate()
+    if kind == "full":
+        if not can_see_finance(request.user):
+            raise PermissionDenied
+        wb = build_full_workbook()
+        filename = f"مشتریان-کامل-{today}.xlsx"
+    else:
+        wb = build_raw_workbook()
+        filename = f"مشتریان-خام-{today}.xlsx"
+    return _xlsx_response(wb, filename)
+
+
+@login_required
+def customer_import_template(request):
+    """دانلود قالب خام برای ورود اطلاعات (هدر + یک ردیف نمونه، بدون داده واقعی)."""
+    wb = build_template_workbook()
+    return _xlsx_response(wb, "قالب-ورود-مشتریان.xlsx")
+
+
+@login_required
+def customer_import(request):
+    """ورود مشتریان از اکسل: آپلود → پیش‌نمایش (جدید/تکراری/خطا) → تأیید نهایی و ذخیره."""
+    if not can_see_finance(request.user):
+        raise PermissionDenied
+
+    preview_rows, parse_error, result = None, None, None
+    duplicate_action = request.POST.get("duplicate_action", "skip")
+
+    if request.method == "POST":
+        if "confirm" in request.POST:
+            try:
+                rows = json.loads(request.POST.get("rows_json", "[]"))
+            except json.JSONDecodeError:
+                rows = []
+            created, updated, skipped = apply_import(rows, duplicate_action, request.user)
+            result = {"created": created, "updated": updated, "skipped": skipped}
+            messages.success(
+                request,
+                f"ورود اطلاعات انجام شد: {created} مشتری جدید، {updated} به‌روزرسانی، {skipped} رد شد.",
+            )
+        elif request.FILES.get("file"):
+            preview_rows, parse_error = parse_import_file(request.FILES["file"])
+
+    counts = None
+    if preview_rows is not None:
+        counts = {
+            "new": sum(1 for r in preview_rows if r["kind"] == "new"),
+            "duplicate": sum(1 for r in preview_rows if r["kind"] == "duplicate"),
+            "error": sum(1 for r in preview_rows if r["kind"] == "error"),
+        }
+
+    return render(request, "crm/customer_import.html", {
+        "preview_rows": preview_rows, "parse_error": parse_error, "counts": counts,
+        "rows_json": json.dumps(preview_rows) if preview_rows is not None else "",
+        "duplicate_action": duplicate_action, "result": result,
+        "finance": can_see_finance(request.user), "manager": is_manager(request.user),
+    })

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}ورود مشتریان از اکسل — {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-10">
+  {% include "crm/_subnav.html" %}
+
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-extrabold">ورود مشتریان از Excel</h1>
+    <a href="{% url 'crm:customer_list' %}" class="text-sm text-brand-blue-700 hover:underline">بازگشت به لیست مشتریان</a>
+  </div>
+
+  {% if result %}
+    <!-- نتیجهٔ نهایی -->
+    <div class="bg-white rounded-3xl shadow-lg border p-6 text-center space-y-3">
+      <div class="text-4xl">✅</div>
+      <h2 class="text-lg font-extrabold">ورود اطلاعات با موفقیت انجام شد</h2>
+      <div class="flex justify-center gap-6 text-sm pt-2">
+        <div><div class="text-2xl font-extrabold text-green-600">{{ result.created }}</div><div class="text-slate-500">مشتری جدید</div></div>
+        <div><div class="text-2xl font-extrabold text-sky-600">{{ result.updated }}</div><div class="text-slate-500">به‌روزرسانی‌شده</div></div>
+        <div><div class="text-2xl font-extrabold text-slate-400">{{ result.skipped }}</div><div class="text-slate-500">رد شده (تکراری)</div></div>
+      </div>
+      <div class="pt-4 flex justify-center gap-3">
+        <a href="{% url 'crm:customer_list' %}" class="rounded-xl bg-brand-blue-600 text-white px-5 py-2.5 text-sm font-bold">مشاهده مشتریان</a>
+        <a href="{% url 'crm:customer_import' %}" class="rounded-xl border px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">ورود فایل دیگر</a>
+      </div>
+    </div>
+
+  {% elif preview_rows is not None %}
+    <!-- پیش‌نمایش قبل از تأیید نهایی -->
+    {% if parse_error %}
+      <div class="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-4 mb-5 text-sm">{{ parse_error }}</div>
+    {% endif %}
+
+    <div class="grid grid-cols-3 gap-3 mb-5 text-center text-sm">
+      <div class="bg-green-50 rounded-xl p-4"><div class="text-2xl font-extrabold text-green-700">{{ counts.new }}</div><div class="text-slate-500">ردیف جدید</div></div>
+      <div class="bg-sky-50 rounded-xl p-4"><div class="text-2xl font-extrabold text-sky-700">{{ counts.duplicate }}</div><div class="text-slate-500">تکراری</div></div>
+      <div class="bg-red-50 rounded-xl p-4"><div class="text-2xl font-extrabold text-red-700">{{ counts.error }}</div><div class="text-slate-500">دارای خطا</div></div>
+    </div>
+
+    <div class="bg-white rounded-2xl border overflow-hidden mb-5">
+      <div class="max-h-96 overflow-y-auto">
+        <table class="w-full text-xs">
+          <thead class="bg-slate-50 sticky top-0">
+            <tr class="text-slate-500 text-right">
+              <th class="py-2 px-3 font-medium">ردیف</th>
+              <th class="font-medium">نام</th>
+              <th class="font-medium">موبایل</th>
+              <th class="font-medium">وضعیت</th>
+              <th class="font-medium">توضیح</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in preview_rows %}
+            <tr class="border-t border-slate-50">
+              <td class="py-2 px-3 text-slate-400">{{ r.row }}</td>
+              <td>{{ r.full_name|default:"—" }}</td>
+              <td>{{ r.mobile|default:"—" }}</td>
+              <td>
+                {% if r.kind == "new" %}<span class="text-green-700 font-bold">جدید</span>
+                {% elif r.kind == "duplicate" %}<span class="text-sky-700 font-bold">تکراری</span>
+                {% else %}<span class="text-red-700 font-bold">خطا</span>{% endif %}
+              </td>
+              <td class="text-slate-500">{{ r.error|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if counts.new or counts.duplicate %}
+    <form method="post" class="bg-white rounded-2xl border p-5 space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="rows_json" value='{{ rows_json }}'>
+      {% if counts.duplicate %}
+      <div>
+        <label class="block text-sm font-bold text-slate-700 mb-2">ردیف‌های تکراری (بر اساس موبایل یا کد ملی):</label>
+        <div class="flex gap-4 text-sm">
+          <label class="flex items-center gap-1.5"><input type="radio" name="duplicate_action" value="skip" {% if duplicate_action == "skip" %}checked{% endif %}> رد شوند</label>
+          <label class="flex items-center gap-1.5"><input type="radio" name="duplicate_action" value="update" {% if duplicate_action == "update" %}checked{% endif %}> به‌روزرسانی شوند</label>
+        </div>
+      </div>
+      {% endif %}
+      <button type="submit" name="confirm" value="1" class="w-full rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white font-bold py-3">
+        تأیید نهایی و ذخیره
+      </button>
+    </form>
+    {% else %}
+      <p class="text-center text-slate-400 text-sm">هیچ ردیف قابل ذخیره‌ای یافت نشد.</p>
+    {% endif %}
+
+  {% else %}
+    <!-- فرم آپلود اولیه -->
+    <div class="bg-white rounded-3xl shadow-lg border p-6">
+      {% if parse_error %}
+        <div class="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mb-4 text-sm">{{ parse_error }}</div>
+      {% endif %}
+      <p class="text-sm text-slate-500 mb-4">
+        فایل اکسل (.xlsx) خود را طبق قالب زیر آماده و آپلود کنید. ابتدا قالب را دانلود کرده، پر کنید، سپس بارگذاری نمایید.
+      </p>
+      <a href="{% url 'crm:customer_import_template' %}" class="inline-flex items-center gap-2 text-sm text-brand-blue-700 hover:underline mb-6">
+        ⬇ دانلود قالب خام (با یک ردیف نمونه)
+      </a>
+      <form method="post" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1">فایل اکسل (.xlsx)</label>
+          <input type="file" name="file" accept=".xlsx" required
+                 class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm">
+        </div>
+        <button class="w-full rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white font-bold py-3">
+          بارگذاری و پیش‌نمایش
+        </button>
+      </form>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
