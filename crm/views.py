@@ -58,12 +58,14 @@ def _safe_next(request, default="crm:dashboard"):
 
 
 def _visible_tasks(user):
-    """کارهای باز قابل مشاهده. مدیر = همه؛ بقیه = همهٔ کارهای باز CRM."""
     qs = Task.objects.open().select_related("customer", "assignee", "group")
     if is_manager(user):
         return qs
-    # طبق توافق: گروه‌های دیگر هم دیده می‌شوند
-    return qs
+    return qs.filter(
+        Q(assignee=user)
+        | Q(created_by=user)
+        | Q(group__members=user)
+    ).distinct()
 
 
 def _all_visible_tasks(user):

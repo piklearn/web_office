@@ -74,9 +74,9 @@ def can_update_status(user, task):
         return True
     if task.assignee_id == user.id:
         return True
-    # کار گروهی بدون مسئول: اعضای همان گروه
-    if task.assignee_id is None and task.group_id:
-        return task.group.members.filter(pk=user.pk).exists()
+    # عضو گروه کاری این کار
+    if task.group_id and task.group.members.filter(pk=user.pk).exists():
+        return True
     return False
 
 class WorkGroup(models.Model):
