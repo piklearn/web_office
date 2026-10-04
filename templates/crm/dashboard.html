@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% load date_tags crm_tags %}
 {% block title %}داشبورد — {{ site_settings.site_name }}{% endblock %}
 {% block extra_head %}
@@ -47,17 +48,22 @@
   <div class="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
 
     {# ── ستون راست ── #}
-    <div class="space-y-4">
+    {# موبایل: دکمه باز/بسته | دسکتاپ: همیشه باز #}
+    <button type="button" id="side-mobile-toggle"
+        class="lg:hidden w-full mb-3 flex items-center justify-between
+               rounded-2xl border bg-white px-4 py-3 text-sm font-bold shadow-sm">
+        <span>دفترچه، یادداشت و پیام‌رسان</span>
+        <span id="side-mobile-chevron"
+              class="text-stone-400 transition-transform duration-300">▼</span>
+    </button>
 
-      {# ساعت #}
+    <div id="side-column"
+        class="space-y-4 overflow-hidden transition-all duration-300 ease-out
+                lg:!max-h-none lg:!opacity-100 lg:!block
+                max-h-0 opacity-0">
       {% include "crm/_clock.html" %}
-
-      {# دفترچه + Todo #}
       {% include "crm/_side_panel.html" %}
-
-      {# دفترچه گفت و گو #}
       {% include "crm/_chat_panel.html" %}
-      
     </div>
     {# ── پایان ستون راست ── #}
 
@@ -110,6 +116,9 @@
 
   </div>
 </section>
+<audio id="alert-sound" preload="auto">
+  <source src="{% static 'sounds/ping.mp3' %}" type="audio/mpeg">
+</audio>
 {{ charts|json_script:"charts-data" }}
 {% endblock %}
 
@@ -181,5 +190,113 @@
     try { open(localStorage.getItem('crm-chat-open') === '1'); } catch (e) { open(false); }
     btn.addEventListener('click', () => open(box.classList.contains('hidden')));
   })();
+  (function () {
+  if (!window.Notification) return;
+  const url = "{% url 'crm:alerts_poll' %}";
+  let lastChat = null;
+  let lastOverdue = null;
+
+  function ensurePermission() {
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }
+  ensurePermission();
+
+  function ping() {
+    const a = document.getElementById("alert-sound");
+    if (a) { try { a.currentTime = 0; a.play(); } catch (e) {} }
+  }
+
+  function notify(title, body) {
+    if (Notification.permission !== "granted") return;
+    try {
+      new Notification(title, { body, silent: true }); // صدا از تگ audio
+    } catch (e) {}
+    ping();
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (lastChat !== null && d.chat_unread >= lastChat && d.chat_unread > 0) {
+        notify("پیام جدید", d.chat_unread + " پیام خوانده‌نشده");
+      }
+      if (lastOverdue !== null && d.overdue > lastOverdue) {
+        notify("کار عقب‌افتاده", d.overdue + " مورد عقب‌افتاده");
+      }
+      lastChat = d.chat_unread;
+      lastOverdue = d.overdue;
+      // به‌روز کردن badge چت اگر در صفحه است
+      const b = document.getElementById("chat-unread-badge");
+      if (b) {
+        b.textContent = d.chat_unread || "";
+        b.classList.toggle("hidden", !d.chat_unread);
+      }
+    } catch (e) {}
+  }
+
+  poll();
+  setInterval(poll, 20000);
+})();
+(function () {
+  const btn = document.getElementById("side-mobile-toggle");
+  const col = document.getElementById("side-column");
+  const chev = document.getElementById("side-mobile-chevron");
+  if (!btn || !col) return;
+
+  const isDesktop = () => window.matchMedia("(min-width: 1024px)").matches;
+
+  function open(on) {
+    if (isDesktop()) {
+      col.style.maxHeight = "";
+      col.classList.remove("max-h-0", "opacity-0");
+      col.classList.add("opacity-100");
+      return;
+    }
+    if (on) {
+      col.classList.remove("max-h-0", "opacity-0");
+      col.classList.add("opacity-100");
+      // ارتفاع واقعی محتوا
+      col.style.maxHeight = col.scrollHeight + "px";
+    } else {
+      col.style.maxHeight = col.scrollHeight + "px"; // از مقدار فعلی شروع کن
+      // force reflow
+      col.offsetHeight;
+      col.style.maxHeight = "0px";
+      col.classList.remove("opacity-100");
+      col.classList.add("opacity-0");
+    }
+    if (chev) chev.style.transform = on ? "rotate(180deg)" : "rotate(0deg)";
+    try { localStorage.setItem("crm-side-mobile", on ? "1" : "0"); } catch (e) {}
+  }
+
+  let initial = false;
+  try { initial = localStorage.getItem("crm-side-mobile") === "1"; } catch (e) {}
+  open(isDesktop() ? true : initial);
+
+  btn.addEventListener("click", () => {
+    const isOpen = col.style.maxHeight && col.style.maxHeight !== "0px"
+      && !col.classList.contains("max-h-0");
+    // تشخیص ساده‌تر:
+    const currentlyOpen = !col.classList.contains("opacity-0") && !isDesktop()
+      ? (parseInt(col.style.maxHeight || "0", 10) > 0 || col.classList.contains("opacity-100"))
+      : false;
+    // وضعیت را از data نگه دار
+    const nowOpen = col.dataset.open === "1";
+    col.dataset.open = nowOpen ? "0" : "1";
+    open(!nowOpen);
+  });
+
+  // بعد از لود عکس/فونت ارتفاع را دوباره تنظیم کن اگر باز است
+  window.addEventListener("resize", () => {
+    if (isDesktop()) open(true);
+    else if (col.dataset.open === "1") {
+      col.style.maxHeight = col.scrollHeight + "px";
+    }
+  });
+})();
 </script>
 {% endblock %}

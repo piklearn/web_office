@@ -1,5 +1,9 @@
 {# پایین _side_panel — پیام‌رسان #}
-<div class="border-t border-stone-200 bg-stone-50/50">
+<div class="border-t border-stone-200 bg-stone-50/50"
+    id="chat-users"
+     hx-get="{% url 'crm:chat_users_partial' %}"
+     hx-trigger="every 10s"
+     hx-swap="innerHTML">
   <button type="button" id="chat-toggle"
           class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold text-stone-700 hover:bg-stone-100 transition">
     <span class="flex items-center gap-2">
@@ -48,11 +52,10 @@
     <form class="p-2 space-y-2"
           hx-post="{% url 'crm:chat_send' active_thread.pk %}"
           hx-target="#chat-messages"
-          hx-swap="beforeend"
+          hx-swap="innerHTML"
           hx-encoding="multipart/form-data"
           enctype="multipart/form-data"
           hx-on::after-request="if(event.detail.successful){ this.reset(); document.getElementById('chat-file-label').textContent='فایل'; }">
-
       <div class="flex items-center gap-1.5">
         {# انتخاب فایل #}
         <label class="shrink-0 cursor-pointer rounded-lg border border-stone-200 bg-white

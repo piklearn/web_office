@@ -12,7 +12,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Count, DecimalField, F, OuterRef, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -723,5 +723,60 @@ def chat_send(request, thread_id):
     )
     thread.save(update_fields=["updated_at"])  # برای مرتب‌سازی لیست
     if _is_htmx(request):
-        return render(request, "crm/_chat_message.html", {"m": msg})
+        messages = thread.messages.select_related("sender").order_by("created_at")[:100]
+        return render(request, "crm/_chat_messages_list.html", {
+            "chat_messages": messages,
+            "active_thread": thread,
+        })
     return redirect("crm:dashboard")
+@login_required
+def chat_messages_partial(request, thread_id):
+    thread = get_object_or_404(ChatThread, pk=thread_id)
+    if request.user.id not in (thread.a_id, thread.b_id):
+        raise PermissionDenied
+
+    # خوانده‌شده
+    thread.messages.filter(read_at__isnull=True).exclude(sender=request.user).update(
+        read_at=timezone.now()
+    )
+    messages = thread.messages.select_related("sender").order_by("created_at")[:100]
+    return render(request, "crm/_chat_messages_list.html", {
+        "chat_messages": messages,
+        "active_thread": thread,
+    })
+
+@login_required
+def chat_users_partial(request):
+    chat_users = (
+            User.objects.filter(is_active=True)
+            .exclude(pk=request.user.pk)
+            .order_by("first_name", "username")
+        )
+    
+    unread_map = defaultdict(int)
+    qs = (
+        ChatMessage.objects.filter(read_at__isnull=True)
+        .filter(Q(thread__a=request.user) | Q(thread__b=request.user))
+        .exclude(sender=request.user)
+        .values_list("sender_id", flat=True)
+    )
+    for sid in qs:
+        unread_map[sid] += 1
+
+    for u in chat_users:
+        u.unread_count = unread_map.get(u.pk, 0)
+    return render(request, "crm/_chat_users.html", {"chat_users": chat_users, "unread_map": unread_map})
+# ───────────── هشدارها ─────────────
+@login_required
+def alerts_poll(request):
+    unread = ChatMessage.objects.filter(
+        read_at__isnull=True,
+    ).filter(
+        Q(thread__a=request.user) | Q(thread__b=request.user)
+    ).exclude(sender=request.user).count()
+
+    urgent = _visible_tasks(request.user).filter(
+        due_date__lt=timezone.localdate()
+    ).count()
+
+    return JsonResponse({"chat_unread": unread, "overdue": urgent})

@@ -14,7 +14,6 @@ urlpatterns = [
     path("customers/<int:pk>/", views.customer_detail, name="customer_detail"),
     path("customers/<int:pk>/edit/", views.customer_form, name="customer_edit"),
     path("customers/<int:pk>/contact/", views.contact_add, name="contact_add"),
-    path("customers/<int:pk>/software/", views.software_add, name="software_add"),
     path("customers/<int:pk>/payment/", views.payment_add, name="payment_add"),
     path("customers/<int:pk>/request/", views.request_add, name="request_add"),
     path("customers/<int:pk>/task/", views.task_add, name="task_add"),
@@ -32,4 +31,7 @@ urlpatterns = [
     path("me/todos/<int:pk>/toggle/", views.todo_toggle, name="todo_toggle"),
     path("me/todos/<int:pk>/delete/", views.todo_delete, name="todo_delete"),
     path("chat/<int:thread_id>/send/", views.chat_send, name="chat_send"),
+    path("me/alerts/", views.alerts_poll, name="alerts_poll"),
+    path("chat/<int:thread_id>/messages/", views.chat_messages_partial, name="chat_messages"),
+    path("chat/users/", views.chat_users_partial, name="chat_users_partial"),
 ]
