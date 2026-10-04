@@ -19,6 +19,10 @@
 </span>
 
   <span class="text-[11px] text-stone-400">
-    {% if today_count %}{{ today_count }} کار امروز{% else %}روز خوبی داشته باشی{% endif %}
+    {% if today_count %}
+        {{ today_count }} کار امروز
+    {% else %}
+        {{ clock_message }}
+    {% endif %}
   </span>
 </div>

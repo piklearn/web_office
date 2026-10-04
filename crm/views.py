@@ -1,6 +1,7 @@
 import json
 from collections import Counter
 from datetime import timedelta
+import random
 
 from django.utils.timezone import now
 import jdatetime
@@ -108,6 +109,29 @@ def dashboard(request):
         4: "جمعه", 5: "شنبه", 6: "یکشنبه",
     }
 
+    CLOCK_MESSAGES = [
+    "روز خوبی داشته باشی",
+    "امروز هم عالی پیش می‌ره",
+    "یک نفس عمیق… بعد ادامه بده",
+    "کوچک‌ها را تمام کن، بزرگ‌ها راحت‌تر می‌شوند",
+    "اولویت امروزت را مشخص کن",
+    "یک تماس، یک پیگیری، یک قدم",
+    "انرژیت را برای کارهای مهم نگه دار",
+    "امروز روز پیشرفتت است",
+    "مرتب و آرام؛ همه چیز درست می‌شود",
+    "قبل از ظهر یک کار عقب‌افتاده را ببند",
+    "قهوه آماده، کار هم شروع",
+    "به خودت سخت نگیر؛ پیوسته باش",
+    "لیست کوتاه، نتیجه بهتر",
+    "با تمرکز شروع کن",
+    "هر پیگیری یک فرصت است",
+    "امروز را ساده شروع کن",
+    "حواست به موعدهای امروز باشد",
+    "یک کار سخت را اول انجام بده",
+    "خسته شدی؟ پنج دقیقه استراحت",
+    "هم‌تیمی‌ها کنارت هستند",
+    
+    ]
     # ویجت «کار بعدی من»
     next_task = mine.filter(due_date__isnull=False).first()
 
@@ -149,7 +173,8 @@ def dashboard(request):
         "today_weekday": jnow.strftime("%A"),
         "today_jalali": jnow.strftime("%d %B %Y"),
         "now_hour": f"{now.hour:02d}",
-        "now_minute": f"{now.minute:02d}"
+        "now_minute": f"{now.minute:02d}",
+        "clock_message": random.choice(CLOCK_MESSAGES)
     }
     return render(request, "crm/dashboard.html", ctx)
 
