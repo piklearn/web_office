@@ -393,3 +393,33 @@ class PersonalTodo(models.Model):
 
     def __str__(self):
         return self.text
+    
+# ───────────── دفترچه گفتگو ─────────────
+class ChatThread(models.Model):
+    """گفتگوی دو نفره."""
+    a = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chat_threads_a")
+    b = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chat_threads_b")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["a", "b"], name="crm_chat_unique_pair"),
+        ]
+
+    def peers(self):
+        return (self.a, self.b)
+
+    def other(self, user):
+        return self.b if self.a_id == user.id else self.a
+
+
+class ChatMessage(models.Model):
+    thread = models.ForeignKey(ChatThread, on_delete=models.CASCADE, related_name="messages")
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="crm_chat_sent")
+    text = models.TextField(blank=True)
+    file = models.FileField(upload_to="crm_chat/%Y/%m/", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["created_at"]

@@ -54,6 +54,10 @@
 
       {# دفترچه + Todo #}
       {% include "crm/_side_panel.html" %}
+
+      {# دفترچه گفت و گو #}
+      {% include "crm/_chat_panel.html" %}
+      
     </div>
     {# ── پایان ستون راست ── #}
 
@@ -162,6 +166,20 @@
   }
   tick();
   setInterval(tick, 15000);
-})();
+  })();
+
+  (function () {
+    const btn = document.getElementById('chat-toggle');
+    const box = document.getElementById('chat-box');
+    const chev = document.getElementById('chat-chevron');
+    if (!btn || !box) return;
+    function open(on) {
+      box.classList.toggle('hidden', !on);
+      if (chev) chev.style.transform = on ? 'rotate(180deg)' : '';
+      try { localStorage.setItem('crm-chat-open', on ? '1' : '0'); } catch (e) {}
+    }
+    try { open(localStorage.getItem('crm-chat-open') === '1'); } catch (e) { open(false); }
+    btn.addEventListener('click', () => open(box.classList.contains('hidden')));
+  })();
 </script>
 {% endblock %}

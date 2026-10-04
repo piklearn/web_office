@@ -1,9 +1,9 @@
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import timedelta
 import random
 
-from django.utils.timezone import now
+from PIL.ImagePath import Path
 import jdatetime
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -23,7 +23,7 @@ from .excel import (apply_import, build_full_workbook, build_raw_workbook,
 from .forms import (ContactForm, CustomerForm, CustomerSoftwareForm, PaymentForm,
                     RequestForm, TaskForm, TaskResultForm)
 from .models import (
-    Customer, CustomerStatus, Payment, Request, Software, Task, TaskStatus,
+    ChatMessage, ChatThread, ChatThread, Customer, CustomerStatus, Payment, Request, Software, Task, TaskStatus,
     PersonalNote, PersonalTodo, CustomerSoftware, can_see_finance, is_manager,
     can_create_task, can_edit_task, can_delete_task, can_update_status,
 )
@@ -31,6 +31,7 @@ from .models import (
 JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
                  "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"]
 
+User = get_user_model()
 
 # ───────────── ابزارهای کمکی ─────────────
 def _is_htmx(request):
@@ -84,6 +85,10 @@ def _with_remaining(qs):
         paid_sum=Coalesce(Subquery(paid, output_field=money), Value(0), output_field=money),
     ).annotate(remaining_sum=F("total_amount") - F("paid_sum"))
 
+def get_or_create_thread(u1, u2):
+    a, b = (u1, u2) if u1.pk < u2.pk else (u2, u1)
+    thread, _ = ChatThread.objects.get_or_create(a=a, b=b)
+    return thread
 
 # ───────────── داشبورد و کارها ─────────────
 @login_required
@@ -132,6 +137,54 @@ def dashboard(request):
     "هم‌تیمی‌ها کنارت هستند",
     
     ]
+
+    # —— پیام‌رسان ——
+    chat_users = (
+        User.objects.filter(is_active=True)
+        .exclude(pk=request.user.pk)
+        .order_by("first_name", "username")
+    )
+
+    active_thread = None
+    active_chat_user = None
+    chat_messages = []
+    chat_unread = 0
+
+    peer_id = request.GET.get("chat")
+    if peer_id and peer_id.isdigit():
+        peer = User.objects.filter(pk=int(peer_id), is_active=True).exclude(pk=request.user.pk).first()
+        if peer:
+            active_chat_user = peer
+            active_thread = get_or_create_thread(request.user, peer)
+            chat_messages = list(
+                active_thread.messages.select_related("sender").order_by("created_at")[:100]
+            )
+            # خوانده‌شده
+            active_thread.messages.filter(read_at__isnull=True).exclude(sender=request.user).update(
+                read_at=timezone.now()
+            )
+
+    # تعداد کل خوانده‌نشده (همه threadهای کاربر)
+    chat_unread = ChatMessage.objects.filter(
+        read_at__isnull=True,
+    ).filter(
+        Q(thread__a=request.user) | Q(thread__b=request.user)
+    ).exclude(sender=request.user).count()
+
+    # شمارش خوانده‌نشده‌ها برای هر کاربر (برای نمایش کنار نام در لیست)
+    unread_map = defaultdict(int)
+    qs = (
+        ChatMessage.objects.filter(read_at__isnull=True)
+        .filter(Q(thread__a=request.user) | Q(thread__b=request.user))
+        .exclude(sender=request.user)
+        .values_list("sender_id", flat=True)
+    )
+    for sid in qs:
+        unread_map[sid] += 1
+
+    for u in chat_users:
+        u.unread_count = unread_map.get(u.pk, 0)
+
     # ویجت «کار بعدی من»
     next_task = mine.filter(due_date__isnull=False).first()
 
@@ -174,7 +227,12 @@ def dashboard(request):
         "today_jalali": jnow.strftime("%d %B %Y"),
         "now_hour": f"{now.hour:02d}",
         "now_minute": f"{now.minute:02d}",
-        "clock_message": random.choice(CLOCK_MESSAGES)
+        "clock_message": random.choice(CLOCK_MESSAGES),
+        "chat_users": chat_users,
+        "active_thread": active_thread,
+        "active_chat_user": active_chat_user,
+        "chat_messages": chat_messages,
+        "chat_unread": chat_unread,
     }
     return render(request, "crm/dashboard.html", ctx)
 
@@ -483,7 +541,7 @@ def reports(request):
     if is_manager(request.user):
         since = timezone.now() - timedelta(days=30)
         open_q = ~Q(crm_tasks__status__in=Task.CLOSED)
-        staff = (get_user_model().objects.filter(crm_tasks__isnull=False).annotate(
+        staff = (User.objects.filter(crm_tasks__isnull=False).annotate(
             done=Count("crm_tasks", filter=Q(crm_tasks__status=TaskStatus.DONE,
                                              crm_tasks__completed_at__gte=since)),
             open=Count("crm_tasks", filter=open_q),
@@ -638,4 +696,32 @@ def todo_delete(request, pk):
     if _is_htmx(request):
         todos = PersonalTodo.objects.filter(user=request.user)[:30]
         return render(request, "crm/_personal_todos.html", {"personal_todos": todos})
+    return redirect("crm:dashboard")
+
+
+# ───────────── دفترچه گفتگو ─────────────
+
+ALLOWED_EXT = {".pdf", ".png", ".jpg", ".jpeg", ".webp", ".doc", ".docx", ".xls", ".xlsx", ".zip"}
+MAX_BYTES = 5 * 1024 * 1024
+
+@login_required
+@require_POST
+def chat_send(request, thread_id):
+    thread = get_object_or_404(ChatThread, pk=thread_id)
+    if request.user.id not in (thread.a_id, thread.b_id):
+        raise PermissionDenied
+    text = (request.POST.get("text") or "").strip()
+    f = request.FILES.get("file")
+    if f:
+        ext = Path(f.name).suffix.lower()
+        if ext not in ALLOWED_EXT or f.size > MAX_BYTES:
+            return HttpResponseBadRequest("فایل مجاز نیست")
+    if not text and not f:
+        return HttpResponseBadRequest("خالی")
+    msg = ChatMessage.objects.create(
+        thread=thread, sender=request.user, text=text[:2000], file=f
+    )
+    thread.save(update_fields=["updated_at"])  # برای مرتب‌سازی لیست
+    if _is_htmx(request):
+        return render(request, "crm/_chat_message.html", {"m": msg})
     return redirect("crm:dashboard")

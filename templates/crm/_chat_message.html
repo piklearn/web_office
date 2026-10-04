@@ -1,0 +1,19 @@
+<div class="flex {% if m.sender_id == request.user.id %}justify-start{% else %}justify-end{% endif %}">
+  <div class="max-w-[85%] rounded-2xl px-3 py-1.5 text-xs leading-relaxed
+              {% if m.sender_id == request.user.id %}
+                bg-stone-800 text-white rounded-br-md
+              {% else %}
+                bg-stone-100 text-stone-800 rounded-bl-md
+              {% endif %}">
+    {% if m.text %}<div>{{ m.text }}</div>{% endif %}
+    {% if m.file %}
+    <a href="{{ m.file.url }}" target="_blank" rel="noopener"
+       class="inline-flex items-center gap-1 mt-1 underline opacity-90">
+      📎 {{ m.file.name|cut:"crm_chat/" }}
+    </a>
+    {% endif %}
+    <div class="text-[9px] opacity-60 mt-0.5 tabular-nums" dir="ltr">
+      {{ m.created_at|time:"H:i" }}
+    </div>
+  </div>
+</div>

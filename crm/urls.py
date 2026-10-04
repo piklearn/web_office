@@ -31,4 +31,5 @@ urlpatterns = [
     path("me/todos/", views.todo_add, name="todo_add"),
     path("me/todos/<int:pk>/toggle/", views.todo_toggle, name="todo_toggle"),
     path("me/todos/<int:pk>/delete/", views.todo_delete, name="todo_delete"),
+    path("chat/<int:thread_id>/send/", views.chat_send, name="chat_send"),
 ]

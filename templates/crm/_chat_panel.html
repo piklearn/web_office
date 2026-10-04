@@ -1,0 +1,87 @@
+{# پایین _side_panel — پیام‌رسان #}
+<div class="border-t border-stone-200 bg-stone-50/50">
+  <button type="button" id="chat-toggle"
+          class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold text-stone-700 hover:bg-stone-100 transition">
+    <span class="flex items-center gap-2">
+      <span class="text-base">💬</span>
+      پیام‌رسان
+      {% if chat_unread %}<span class="text-[10px] rounded-full bg-red-500 text-white px-1.5 py-0.5">{{ chat_unread }}</span>{% endif %}
+    </span>
+    <span id="chat-chevron" class="text-stone-400 text-xs transition">▼</span>
+  </button>
+
+  <div id="chat-box" class="hidden border-t border-stone-100">
+    {# لیست طرف‌ها #}
+    <div class="px-2 pt-2 max-h-24 overflow-y-auto flex gap-1 flex-wrap">
+      {% for u in chat_users %}
+        <a href="{% url 'crm:dashboard' %}?chat={{ u.pk }}"
+          class="inline-flex items-center gap-1 text-[11px] rounded-full border px-2.5 py-1 transition
+                  {% if active_chat_user.pk == u.pk %}bg-stone-800 text-white border-stone-800
+                  {% else %}bg-white text-stone-600 border-stone-200 hover:border-stone-400{% endif %}">
+          {{ u.get_full_name|default:u.username }}
+          {% if u.unread_count %}
+          <span class="min-w-[1.1rem] h-4 px-1 rounded-full text-[10px] font-bold
+                      flex items-center justify-center
+                      {% if active_chat_user.pk == u.pk %}bg-white text-stone-800
+                      {% else %}bg-red-500 text-white{% endif %}">
+            {{ u.unread_count }}
+          </span>
+          {% endif %}
+        </a>
+      {% empty %}
+      <span class="text-[11px] text-stone-400 px-2">همکاری نیست</span>
+      {% endfor %}
+    </div>
+
+    {# پیام‌ها #}
+    <div id="chat-messages"
+         class="mx-2 mt-2 h-40 overflow-y-auto rounded-xl border border-stone-200 bg-white p-2 space-y-2 text-sm">
+      {% for m in chat_messages %}
+        {% include "crm/_chat_message.html" %}
+      {% empty %}
+      <p class="text-xs text-stone-400 text-center py-6">پیامی نیست — سلام کنید.</p>
+      {% endfor %}
+    </div>
+
+    {# فرم ارسال #}
+    {% if active_thread %}
+    <form class="p-2 space-y-2"
+          hx-post="{% url 'crm:chat_send' active_thread.pk %}"
+          hx-target="#chat-messages"
+          hx-swap="beforeend"
+          hx-encoding="multipart/form-data"
+          enctype="multipart/form-data"
+          hx-on::after-request="if(event.detail.successful){ this.reset(); document.getElementById('chat-file-label').textContent='فایل'; }">
+
+      <div class="flex items-center gap-1.5">
+        {# انتخاب فایل #}
+        <label class="shrink-0 cursor-pointer rounded-lg border border-stone-200 bg-white
+                      hover:bg-stone-100 text-stone-500 px-2.5 py-2 text-xs font-bold
+                      flex items-center gap-1 transition">
+          <span>📎</span>
+          <span id="chat-file-label">فایل</span>
+          <input type="file" name="file" class="hidden"
+                 onchange="document.getElementById('chat-file-label').textContent = this.files[0] ? this.files[0].name.slice(0,12) : 'فایل'">
+        </label>
+
+        {# متن #}
+        <input name="text" maxlength="2000" autocomplete="off"
+               placeholder="پیام..."
+               class="flex-1 min-w-0 text-sm rounded-lg border border-stone-200 bg-white
+                      px-3 py-2 outline-none focus:border-stone-400 focus:ring-1
+                      focus:ring-stone-200 placeholder:text-stone-300">
+
+        {# ارسال #}
+        <button type="submit"
+                class="shrink-0 rounded-lg bg-stone-800 hover:bg-stone-900 text-white
+                       text-xs font-bold px-3 py-2 transition">
+          ارسال
+        </button>
+      </div>
+      <p class="text-[10px] text-stone-400 px-0.5">حداکثر ۵MB — pdf, تصویر, office</p>
+    </form>
+    {% else %}
+    <p class="text-xs text-stone-400 text-center py-3">یک نفر را انتخاب کنید</p>
+    {% endif %}
+  </div>
+</div>
