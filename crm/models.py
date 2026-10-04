@@ -360,3 +360,36 @@ class Activity(models.Model):
 
     def __str__(self):
         return self.text
+
+# ───────────── دفترچه یادداشت ─────────────
+class PersonalNote(models.Model):
+    """دفترچه یادداشت شخصی هر کاربر (یک دفترچه جاری)."""
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="crm_note", verbose_name="کاربر"
+    )
+    body = models.TextField("متن", blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "یادداشت شخصی"
+        verbose_name_plural = "یادداشت‌های شخصی"
+
+    def __str__(self):
+        return f"یادداشت {self.user}"
+
+
+class PersonalTodo(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="crm_todos", verbose_name="کاربر"
+    )
+    text = models.CharField("متن", max_length=250)
+    is_done = models.BooleanField("انجام شد", default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "کار شخصی"
+        verbose_name_plural = "کارهای شخصی (Todo)"
+        ordering = ["is_done", "-created_at"]
+
+    def __str__(self):
+        return self.text

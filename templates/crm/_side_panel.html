@@ -1,0 +1,71 @@
+<aside class="bg-white rounded-2xl border shadow-sm overflow-hidden sticky top-24">
+  {# تب‌ها — پیش‌فرض دفترچه #}
+  <div class="flex border-b text-sm" id="side-tabs">
+    <button type="button" data-side="note"
+            class="side-tab flex-1 py-2.5 font-bold text-brand-blue-700 border-b-2 border-brand-blue-600">
+      دفترچه
+    </button>
+    <button type="button" data-side="todo"
+            class="side-tab flex-1 py-2.5 text-slate-500">
+      Todo
+    </button>
+  </div>
+
+  {# دفترچه (پیش‌فرض باز) #}
+  <div id="side-note" class="side-panel p-4">
+    <form hx-post="{% url 'crm:note_save' %}"
+          hx-target="#note-status" hx-swap="innerHTML"
+          hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'>
+      <textarea name="body" rows="12"
+                class="w-full text-sm rounded-xl border border-slate-200 p-3 outline-none focus:border-brand-blue-400 resize-y min-h-[200px]"
+                placeholder="یادداشت‌های روزانه، شماره، قرار...">{{ personal_note.body }}</textarea>
+      <div class="flex items-center justify-between mt-2">
+        <span id="note-status" class="text-xs text-slate-400">
+          {% if personal_note.updated_at %}آخرین ذخیره: {{ personal_note.updated_at|date:"H:i" }}{% endif %}
+        </span>
+        <button type="submit" class="text-xs rounded-lg bg-brand-blue-600 text-white px-3 py-1.5 font-bold">
+          ذخیره
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# Todo (پیش‌فرض مخفی) #}
+  <div id="side-todo" class="side-panel p-4 hidden">
+    <form class="flex gap-2 mb-3"
+          hx-post="{% url 'crm:todo_add' %}"
+          hx-target="#personal-todos" hx-swap="outerHTML"
+          hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+          hx-on::after-request="if(event.detail.successful) this.reset()">
+      <input name="text" required maxlength="250"
+             class="flex-1 text-sm rounded-lg border px-3 py-1.5 outline-none focus:border-brand-blue-400"
+             placeholder="کار جدید...">
+      <button type="submit" class="text-xs rounded-lg bg-slate-800 text-white px-3 py-1.5 font-bold">+</button>
+    </form>
+    {% include "crm/_personal_todos.html" %}
+  </div>
+</aside>
+
+<script>
+(function () {
+  const tabs = document.querySelectorAll('.side-tab');
+  const panels = { note: document.getElementById('side-note'), todo: document.getElementById('side-todo') };
+  function show(name) {
+    Object.keys(panels).forEach(k => panels[k].classList.toggle('hidden', k !== name));
+    tabs.forEach(b => {
+      const on = b.dataset.side === name;
+      b.classList.toggle('text-brand-blue-700', on);
+      b.classList.toggle('font-bold', on);
+      b.classList.toggle('border-b-2', on);
+      b.classList.toggle('border-brand-blue-600', on);
+      b.classList.toggle('text-slate-500', !on);
+    });
+    try { localStorage.setItem('crm-side-tab', name); } catch (e) {}
+  }
+  tabs.forEach(b => b.addEventListener('click', () => show(b.dataset.side)));
+  // پیش‌فرض: دفترچه (مگر کاربر قبلاً Todo را انتخاب کرده باشد)
+  let initial = 'note';
+  try { initial = localStorage.getItem('crm-side-tab') || 'note'; } catch (e) {}
+  show(initial === 'todo' ? 'todo' : 'note');
+})();
+</script>

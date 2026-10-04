@@ -22,7 +22,7 @@ from .forms import (ContactForm, CustomerForm, CustomerSoftwareForm, PaymentForm
                     RequestForm, TaskForm, TaskResultForm)
 from .models import (
     Customer, CustomerStatus, Payment, Request, Software, Task, TaskStatus,
-    WorkGroup, can_see_finance, is_manager,
+    PersonalNote, PersonalTodo, CustomerSoftware, can_see_finance, is_manager,
     can_create_task, can_edit_task, can_delete_task, can_update_status,
 )
 
@@ -93,7 +93,9 @@ def dashboard(request):
     tomorrow = mine.filter(due_date=today + timedelta(days=1))
     waiting = mine.filter(status=TaskStatus.WAITING_CUSTOMER)
     needs = mine.filter(status=TaskStatus.NEEDS_FOLLOWUP)
-
+    note, _ = PersonalNote.objects.get_or_create(user=request.user)
+    todos = PersonalTodo.objects.filter(user=request.user)[:30]
+    
     # ویجت «کار بعدی من»
     next_task = mine.filter(due_date__isnull=False).first()
 
@@ -130,6 +132,8 @@ def dashboard(request):
         "sections": sections, "next_task": next_task,
         "charts": {"status": status_chart, "done": done_chart},
         "manager": is_manager(request.user), "finance": can_see_finance(request.user),
+        "personal_note": note,
+        "personal_todos": todos,
     }
     return render(request, "crm/dashboard.html", ctx)
 
@@ -546,3 +550,51 @@ def customer_import(request):
         "duplicate_action": duplicate_action, "result": result,
         "finance": can_see_finance(request.user), "manager": is_manager(request.user),
     })
+
+# ───────────── دفترچه یادداشت ─────────────
+@login_required
+@require_POST
+def note_save(request):
+    note, _ = PersonalNote.objects.get_or_create(user=request.user)
+    note.body = request.POST.get("body", "")[:5000]
+    note.save(update_fields=["body", "updated_at"])
+    if _is_htmx(request):
+        return HttpResponse(
+            '<span class="text-emerald-600 text-xs">ذخیره شد</span>',
+            headers={"HX-Trigger": json.dumps({"toast": "یادداشت ذخیره شد."})},
+        )
+    return redirect("crm:dashboard")
+
+
+@login_required
+@require_POST
+def todo_add(request):
+    text = (request.POST.get("text") or "").strip()
+    if text:
+        PersonalTodo.objects.create(user=request.user, text=text[:250])
+    if _is_htmx(request):
+        todos = PersonalTodo.objects.filter(user=request.user)[:30]
+        return render(request, "crm/_personal_todos.html", {"personal_todos": todos})
+    return redirect("crm:dashboard")
+
+
+@login_required
+@require_POST
+def todo_toggle(request, pk):
+    todo = get_object_or_404(PersonalTodo, pk=pk, user=request.user)
+    todo.is_done = not todo.is_done
+    todo.save(update_fields=["is_done"])
+    if _is_htmx(request):
+        todos = PersonalTodo.objects.filter(user=request.user)[:30]
+        return render(request, "crm/_personal_todos.html", {"personal_todos": todos})
+    return redirect("crm:dashboard")
+
+
+@login_required
+@require_POST
+def todo_delete(request, pk):
+    PersonalTodo.objects.filter(pk=pk, user=request.user).delete()
+    if _is_htmx(request):
+        todos = PersonalTodo.objects.filter(user=request.user)[:30]
+        return render(request, "crm/_personal_todos.html", {"personal_todos": todos})
+    return redirect("crm:dashboard")

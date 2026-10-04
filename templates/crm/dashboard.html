@@ -5,9 +5,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>body.compact .is-empty { display: none; }</style>
 {% endblock %}
+
 {% block content %}
-<section class="max-w-5xl mx-auto px-4 py-10">
+<section class="max-w-7xl mx-auto px-4 py-10">
   {% include "crm/_subnav.html" %}
+
+  {# هدر تمام‌عرض #}
   <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-extrabold">داشبورد</h1>
     <div class="flex gap-2 text-sm">
@@ -16,89 +19,134 @@
     </div>
   </div>
 
+  {# کارت‌های آمار تمام‌عرض #}
   <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6 text-center">
-    <a href="{% url 'crm:customer_list' %}" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400"><div class="text-2xl font-extrabold">{{ customers_count }}</div><div class="text-xs text-slate-500">مشتریان کل</div></a>
-    <a href="{% url 'crm:task_list' %}" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400"><div class="text-2xl font-extrabold">{{ total_open|default:0 }}</div><div class="text-xs text-slate-500">{% if manager %}کل پیگیری‌های باز{% else %}پیگیری‌های من{% endif %}</div></a>
-    <a href="{% url 'crm:task_list' %}?due=today" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400"><div class="text-2xl font-extrabold">{{ today_count }}</div><div class="text-xs text-slate-500">پیگیری امروز</div></a>
-    <a href="{% url 'crm:task_list' %}?due=overdue" class="bg-white rounded-2xl border p-4 hover:border-red-400 {% if overdue_count %}border-red-300 bg-red-50{% endif %}"><div class="text-2xl font-extrabold text-red-600">{{ overdue_count }}</div><div class="text-xs text-slate-500">عقب‌افتاده</div></a>
-    <a href="{% url 'crm:task_list' %}?status=waiting_customer" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400"><div class="text-2xl font-extrabold">{{ waiting_count }}</div><div class="text-xs text-slate-500">در انتظار مشتری</div></a>
+    <a href="{% url 'crm:customer_list' %}" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400">
+      <div class="text-2xl font-extrabold">{{ customers_count }}</div>
+      <div class="text-xs text-slate-500">مشتریان کل</div>
+    </a>
+    <a href="{% url 'crm:task_list' %}" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400">
+      <div class="text-2xl font-extrabold">{{ total_open|default:0 }}</div>
+      <div class="text-xs text-slate-500">{% if manager %}کل پیگیری‌های باز{% else %}پیگیری‌های من{% endif %}</div>
+    </a>
+    <a href="{% url 'crm:task_list' %}?due=today" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400">
+      <div class="text-2xl font-extrabold">{{ today_count }}</div>
+      <div class="text-xs text-slate-500">پیگیری امروز</div>
+    </a>
+    <a href="{% url 'crm:task_list' %}?due=overdue" class="bg-white rounded-2xl border p-4 hover:border-red-400 {% if overdue_count %}border-red-300 bg-red-50{% endif %}">
+      <div class="text-2xl font-extrabold text-red-600">{{ overdue_count }}</div>
+      <div class="text-xs text-slate-500">عقب‌افتاده</div>
+    </a>
+    <a href="{% url 'crm:task_list' %}?status=waiting_customer" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400">
+      <div class="text-2xl font-extrabold">{{ waiting_count }}</div>
+      <div class="text-xs text-slate-500">در انتظار مشتری</div>
+    </a>
   </div>
 
-  {% if next_task %}
-  <div class="mb-6">
-    <h2 class="font-bold text-brand-blue-700 mb-2">🎯 کار بعدی من</h2>
-    {% include "crm/_task_row.html" with t=next_task %}
-  </div>
-  {% endif %}
+  {# دو ستون: محتوا | پنل راست #}
+  <div class="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
 
-  <div class="grid md:grid-cols-2 gap-4 mb-8">
-    <div class="bg-white rounded-2xl border p-4">
-      <h3 class="text-sm font-bold mb-2">وضعیت مشتریان</h3>
-      <div class="h-48"><canvas id="chart-status"></canvas></div>
+    {# ── ستون راست: دفترچه + Todo ── #}
+    <div class="order-first lg:order-none">
+      {% include "crm/_side_panel.html" %}
     </div>
-    <div class="bg-white rounded-2xl border p-4">
-      <h3 class="text-sm font-bold mb-2">کارهای انجام‌شده در ۷ روز اخیر</h3>
-      <div class="h-48"><canvas id="chart-done"></canvas></div>
-    </div>
-  </div>
+    
+    {# ── ستون اصلی ── #}
+    <div class="min-w-0 space-y-6">
 
-  <div class="rounded-2xl border bg-white overflow-hidden mb-6">
-  {% for sec in sections %}
-<div class="dash-section {% if not sec.tasks %}is-empty{% endif %} mb-6">
-  <div class="flex items-center justify-between gap-3 mb-3 rounded-xl border px-4 py-2.5
-              {% if 'عقب' in sec.title %}bg-red-50 border-red-100
-              {% elif 'امروز' in sec.title %}bg-orange-50 border-orange-100
-              {% elif 'فردا' in sec.title %}bg-amber-50 border-amber-100
-              {% elif 'منتظر' in sec.title %}bg-sky-50 border-sky-100
-              {% else %}bg-slate-50 border-slate-100{% endif %}">
-    <h2 class="font-extrabold text-sm {{ sec.cls }} flex items-center gap-2">
-      {{ sec.title }}
-    </h2>
-    <span class="text-xs font-bold rounded-full bg-white border px-2.5 py-0.5 text-slate-600">
-      {{ sec.tasks|length }} مورد
-    </span>
+      {% if next_task %}
+      <div>
+        <h2 class="font-bold text-brand-blue-700 mb-2">🎯 کار بعدی من</h2>
+        {% include "crm/_task_row.html" with t=next_task %}
+      </div>
+      {% endif %}
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl border p-4">
+          <h3 class="text-sm font-bold mb-2">وضعیت مشتریان</h3>
+          <div class="h-48"><canvas id="chart-status"></canvas></div>
+        </div>
+        <div class="bg-white rounded-2xl border p-4">
+          <h3 class="text-sm font-bold mb-2">کارهای انجام‌شده در ۷ روز اخیر</h3>
+          <div class="h-48"><canvas id="chart-done"></canvas></div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border bg-white overflow-hidden">
+        {% for sec in sections %}
+        <div class="dash-section {% if not sec.tasks %}is-empty{% endif %} {% if not forloop.last %}border-b{% endif %} p-4">
+          <div class="flex items-center justify-between gap-3 mb-3 rounded-xl border px-4 py-2.5
+                      {% if 'عقب' in sec.title %}bg-red-50 border-red-100
+                      {% elif 'امروز' in sec.title %}bg-orange-50 border-orange-100
+                      {% elif 'فردا' in sec.title %}bg-amber-50 border-amber-100
+                      {% elif 'منتظر' in sec.title %}bg-sky-50 border-sky-100
+                      {% else %}bg-slate-50 border-slate-100{% endif %}">
+            <h2 class="font-extrabold text-sm {{ sec.cls }} flex items-center gap-2">{{ sec.title }}</h2>
+            <span class="text-xs font-bold rounded-full bg-white border px-2.5 py-0.5 text-slate-600">
+              {{ sec.tasks|length }} مورد
+            </span>
+          </div>
+          <div class="space-y-2">
+            {% for t in sec.tasks %}
+              {% include "crm/_task_row.html" %}
+            {% empty %}
+              <p class="text-sm text-slate-400 px-1">موردی نیست.</p>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+    {# ── پایان ستون اصلی ── #}
+
+    
+
   </div>
-  <div class="space-y-2">
-    {% for t in sec.tasks %}
-      {% include "crm/_task_row.html" %}
-    {% empty %}
-      <p class="text-sm text-slate-400 px-1">موردی نیست.</p>
-    {% endfor %}
-  </div>
-</div>
-{% endfor %}
-</div>
 </section>
 {{ charts|json_script:"charts-data" }}
 {% endblock %}
+
 {% block extra_scripts %}
 <script>
-  (function () {
-    // حالت فشرده: بخش‌های خالی مخفی می‌شوند (انتخاب کاربر در مرورگر می‌ماند)
-    const btn = document.getElementById('compact-toggle');
-    const apply = on => { document.body.classList.toggle('compact', on); btn.textContent = on ? 'حالت گسترده' : 'حالت فشرده'; };
-    try { apply(localStorage.getItem('crm-compact') === '1'); } catch (e) { apply(false); }
-    btn.addEventListener('click', () => {
-      const on = !document.body.classList.contains('compact');
-      apply(on);
-      try { localStorage.setItem('crm-compact', on ? '1' : '0'); } catch (e) {}
-    });
+(function () {
+  const btn = document.getElementById('compact-toggle');
+  const apply = on => {
+    document.body.classList.toggle('compact', on);
+    if (btn) btn.textContent = on ? 'حالت گسترده' : 'حالت فشرده';
+  };
+  try { apply(localStorage.getItem('crm-compact') === '1'); } catch (e) { apply(false); }
+  if (btn) btn.addEventListener('click', () => {
+    const on = !document.body.classList.contains('compact');
+    apply(on);
+    try { localStorage.setItem('crm-compact', on ? '1' : '0'); } catch (e) {}
+  });
 
-    if (typeof Chart === 'undefined') return;
-    const d = JSON.parse(document.getElementById('charts-data').textContent);
-    Chart.defaults.font.family = 'Vazirmatn, sans-serif';
-    new Chart(document.getElementById('chart-status'), {
-      type: 'doughnut',
-      data: { labels: d.status.labels, datasets: [{ data: d.status.values,
-        backgroundColor: ['#2e9ef0', '#f9ab08', '#10b981', '#94a3b8', '#ef4444'] }] },
-      options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-    });
-    new Chart(document.getElementById('chart-done'), {
-      type: 'bar',
-      data: { labels: d.done.labels, datasets: [{ data: d.done.values, backgroundColor: '#2e9ef0', borderRadius: 6 }] },
-      options: { maintainAspectRatio: false, plugins: { legend: { display: false } },
-                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-    });
-  })();
+  if (typeof Chart === 'undefined') return;
+  const el = document.getElementById('charts-data');
+  if (!el) return;
+  const d = JSON.parse(el.textContent);
+  Chart.defaults.font.family = 'Vazirmatn, sans-serif';
+  new Chart(document.getElementById('chart-status'), {
+    type: 'doughnut',
+    data: {
+      labels: d.status.labels,
+      datasets: [{ data: d.status.values, backgroundColor: ['#2e9ef0', '#f9ab08', '#10b981', '#94a3b8', '#ef4444'] }]
+    },
+    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+  new Chart(document.getElementById('chart-done'), {
+    type: 'bar',
+    data: {
+      labels: d.done.labels,
+      datasets: [{ data: d.done.values, backgroundColor: '#2e9ef0', borderRadius: 6 }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+})();
 </script>
 {% endblock %}

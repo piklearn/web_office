@@ -1,0 +1,20 @@
+<div id="personal-todos" class="space-y-2">
+  {% for item in personal_todos %}
+  <div class="flex items-start gap-2 text-sm group">
+    <button type="button"
+            hx-post="{% url 'crm:todo_toggle' item.pk %}"
+            hx-target="#personal-todos" hx-swap="outerHTML"
+            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+            class="mt-0.5 h-4 w-4 rounded border shrink-0 {% if item.is_done %}bg-emerald-500 border-emerald-500{% else %}border-slate-300{% endif %}"
+            title="تغییر وضعیت"></button>
+    <span class="flex-1 {% if item.is_done %}line-through text-slate-400{% endif %}">{{ item.text }}</span>
+    <button type="button"
+            hx-post="{% url 'crm:todo_delete' item.pk %}"
+            hx-target="#personal-todos" hx-swap="outerHTML"
+            hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+            class="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 text-xs">×</button>
+  </div>
+  {% empty %}
+  <p class="text-xs text-slate-400">موردی نیست — یکی اضافه کن.</p>
+  {% endfor %}
+</div>
