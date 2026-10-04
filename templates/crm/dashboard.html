@@ -43,17 +43,22 @@
     </a>
   </div>
 
-  {# دو ستون: محتوا | پنل راست #}
+    {# دو ستون: راست = ساعت+دفترچه | چپ = محتوا #}
   <div class="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
 
-    {# ── ستون راست: دفترچه + Todo ── #}
-    <div class="order-first lg:order-none">
+    {# ── ستون راست ── #}
+    <div class="space-y-4">
+
+      {# ساعت #}
+      {% include "crm/_clock.html" %}
+
+      {# دفترچه + Todo #}
       {% include "crm/_side_panel.html" %}
     </div>
-    
+    {# ── پایان ستون راست ── #}
+
     {# ── ستون اصلی ── #}
     <div class="min-w-0 space-y-6">
-
       {% if next_task %}
       <div>
         <h2 class="font-bold text-brand-blue-700 mb-2">🎯 کار بعدی من</h2>
@@ -81,7 +86,7 @@
                       {% elif 'فردا' in sec.title %}bg-amber-50 border-amber-100
                       {% elif 'منتظر' in sec.title %}bg-sky-50 border-sky-100
                       {% else %}bg-slate-50 border-slate-100{% endif %}">
-            <h2 class="font-extrabold text-sm {{ sec.cls }} flex items-center gap-2">{{ sec.title }}</h2>
+            <h2 class="font-extrabold text-sm {{ sec.cls }}">{{ sec.title }}</h2>
             <span class="text-xs font-bold rounded-full bg-white border px-2.5 py-0.5 text-slate-600">
               {{ sec.tasks|length }} مورد
             </span>
@@ -96,11 +101,8 @@
         </div>
         {% endfor %}
       </div>
-
     </div>
     {# ── پایان ستون اصلی ── #}
-
-    
 
   </div>
 </section>
@@ -147,6 +149,19 @@
       scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
     }
   });
+})();
+
+  (function () {
+  const hEl = document.getElementById('clock-h');
+  const mEl = document.getElementById('clock-m');
+  if (!hEl || !mEl) return;
+  function tick() {
+    const n = new Date();
+    hEl.textContent = String(n.getHours()).padStart(2, '0');
+    mEl.textContent = String(n.getMinutes()).padStart(2, '0');
+  }
+  tick();
+  setInterval(tick, 15000);
 })();
 </script>
 {% endblock %}

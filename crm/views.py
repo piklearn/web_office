@@ -2,6 +2,7 @@ import json
 from collections import Counter
 from datetime import timedelta
 
+from django.utils.timezone import now
 import jdatetime
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -95,7 +96,18 @@ def dashboard(request):
     needs = mine.filter(status=TaskStatus.NEEDS_FOLLOWUP)
     note, _ = PersonalNote.objects.get_or_create(user=request.user)
     todos = PersonalTodo.objects.filter(user=request.user)[:30]
-    
+    now = timezone.localtime()
+    jnow = jdatetime.datetime.fromgregorian(datetime=now)
+    try:
+        jnow = jnow.locale("fa_IR")
+    except Exception:
+        pass
+
+    WEEKDAYS_FA = {
+        0: "دوشنبه", 1: "سه‌شنبه", 2: "چهارشنبه", 3: "پنجشنبه",
+        4: "جمعه", 5: "شنبه", 6: "یکشنبه",
+    }
+
     # ویجت «کار بعدی من»
     next_task = mine.filter(due_date__isnull=False).first()
 
@@ -134,6 +146,10 @@ def dashboard(request):
         "manager": is_manager(request.user), "finance": can_see_finance(request.user),
         "personal_note": note,
         "personal_todos": todos,
+        "today_weekday": jnow.strftime("%A"),
+        "today_jalali": jnow.strftime("%d %B %Y"),
+        "now_hour": f"{now.hour:02d}",
+        "now_minute": f"{now.minute:02d}"
     }
     return render(request, "crm/dashboard.html", ctx)
 

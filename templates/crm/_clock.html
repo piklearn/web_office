@@ -1,0 +1,24 @@
+<div class="w-full mx-auto rounded-3xl border border-stone-200
+            bg-gradient-to-b from-stone-50 to-amber-50/40
+            shadow-sm p-4 flex flex-col items-center justify-center gap-2
+            aspect-square">
+  <span class="text-xs text-stone-500 text-center leading-relaxed">
+    {{ today_weekday }}
+    <br>
+    <span class="text-sm font-bold text-stone-800">{{ today_jalali }}</span>
+  </span>
+
+   <span id="fitbit-clock"
+      class="inline-flex items-baseline tabular-nums tracking-tight"
+      dir="ltr"
+      style="font-size: 2.75rem; line-height: 1; font-weight: 900; color: #292524;">
+  <span id="clock-h">{{ now_hour|default:"--" }}</span><!--
+  --><span id="clock-colon"
+        style="margin: 0 1px; position: relative; top: -0.12em;">:</span><!--
+  --><span id="clock-m">{{ now_minute|default:"--" }}</span>
+</span>
+
+  <span class="text-[11px] text-stone-400">
+    {% if today_count %}{{ today_count }} کار امروز{% else %}روز خوبی داشته باشی{% endif %}
+  </span>
+</div>
