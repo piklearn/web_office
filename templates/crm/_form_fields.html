@@ -1,9 +1,68 @@
-{% for field in form %}
-  <div>
-    <label class="block text-sm font-bold text-slate-700 mb-1">{{ field.label }}</label>
-    {{ field }}
-    {% if field.help_text %}<p class="text-xs text-slate-400 mt-1">{{ field.help_text }}</p>{% endif %}
-    {% for e in field.errors %}<p class="text-xs text-red-500 mt-1">{{ e }}</p>{% endfor %}
-  </div>
+{% for e in form.non_field_errors %}
+<p class="mb-4 sm:col-span-2 rounded-xl bg-red-50 text-red-700 text-sm px-4 py-3">{{ e }}</p>
 {% endfor %}
-{% for e in form.non_field_errors %}<p class="text-xs text-red-500">{{ e }}</p>{% endfor %}
+
+{% for e in form.non_field_errors %}
+<p class="mb-4 rounded-xl bg-red-50 text-red-700 text-sm px-4 py-3 sm:col-span-2">{{ e }}</p>
+{% endfor %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-6">
+{% for field in form %}
+  {% with name=field.name wt=field.field.widget.input_type %}
+
+  {# —— تمام‌عرض: آدرس و توضیحات —— #}
+  {% if name == "address" or name == "description" or name == "note" or name == "result_note" or name == "result" %}
+    <div class="sm:col-span-2 space-y-1">
+      <div class="float-field float-area">
+        {{ field }}
+        <label for="{{ field.id_for_label }}" class="float-label float-label-fixed">
+          {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+      </div>
+      {% if field.help_text %}<p class="text-[11px] text-slate-400 px-1">{{ field.help_text }}</p>{% endif %}
+      {% for e in field.errors %}<p class="text-xs text-red-500 px-1">{{ e }}</p>{% endfor %}
+    </div>
+
+  {# —— Select: وضعیت، نوع فعالیت، مسئول، … —— #}
+  {% elif wt == None or name == "status" or name == "activity_type" or name == "owner" or name == "group" or name == "assignee" or name == "software" or name == "sale_status" or name == "drop_reason" or name == "method" %}
+    <div class="space-y-1">
+      <div class="float-field float-select">
+        {{ field }}
+        <label for="{{ field.id_for_label }}" class="float-label float-label-fixed">
+          {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+    </div>
+    {% if field.help_text %}<p class="text-[11px] text-slate-400 px-1">{{ field.help_text }}</p>{% endif %}
+    {% for e in field.errors %}<p class="text-xs text-red-500 px-1">{{ e }}</p>{% endfor %}
+  </div>
+  {% elif "jalali-date" in field.field.widget.attrs.class|default:"" or field.name == "birth_date" or field.name == "due_date" or field.name == "date" %}
+      <div class="float-field float-select">
+        {{ field }}
+        <label for="{{ field.id_for_label }}" class="float-label float-label-fixed">
+          {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+      </div>
+  {# —— چک‌باکس —— #}
+  {% elif wt == "checkbox" %}
+  <div class="sm:col-span-2 flex items-center gap-2 py-1">
+    {{ field }}
+    <label for="{{ field.id_for_label }}" class="text-sm font-bold text-slate-700">{{ field.label }}</label>
+  </div>
+
+  {# —— بقیه: متن / موبایل / تاریخ —— #}
+  {% else %}
+  <div class="space-y-1">
+    <div class="float-field">
+      {{ field }}
+      <label for="{{ field.id_for_label }}" class="float-label">
+        {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+      </label>
+    </div>
+    {% if field.help_text %}<p class="text-[11px] text-slate-400 px-1">{{ field.help_text }}</p>{% endif %}
+    {% for e in field.errors %}<p class="text-xs text-red-500 px-1">{{ e }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% endwith %}
+{% endfor %}
+</div>

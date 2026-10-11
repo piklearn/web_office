@@ -1,0 +1,75 @@
+/* —— label شناور: وسط اینپوت → روی بوردر —— */
+.float-field {
+  position: relative;
+}
+.float-field input,
+.float-field textarea,
+.float-field select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  background: #fff;
+  padding: 0.85rem 1rem;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  text-align: right;
+}
+.float-field input:focus,
+.float-field textarea:focus,
+.float-field select:focus {
+  border-color: #1a7fd6;
+  box-shadow: 0 0 0 3px rgba(26, 127, 214, 0.15);
+}
+.float-field .float-label {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0 0.35rem;
+  font-size: 0.875rem;
+  color: #94a3b8;
+  background: transparent;
+  pointer-events: none;
+  transition: top .18s ease, transform .18s ease, font-size .18s ease,
+              color .18s ease, background .18s ease;
+  z-index: 1;
+}
+/* textarea: نقطه شروع کمی پایین‌تر از وسط */
+.float-field textarea + .float-label {
+  top: 1.1rem;
+  transform: none;
+}
+/* فوکوس یا پر → روی بوردر */
+.float-field input:focus + .float-label,
+.float-field input:not(:placeholder-shown) + .float-label,
+.float-field textarea:focus + .float-label,
+.float-field textarea:not(:placeholder-shown) + .float-label {
+  top: 0;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #1a7fd6;
+  background: #fff;
+}
+/* Select: همیشه روی بوردر */
+.float-field.float-select .float-label,
+.float-label-fixed {
+  top: 0 !important;
+  transform: translateY(-50%) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  background: #fff !important;
+}
+.float-field.float-select select:focus + .float-label,
+.float-field.float-select select:focus ~ .float-label {
+  color: #1a7fd6 !important;
+}
+/* برای select که label قبل از فیلد است */
+.float-field.float-select .float-label {
+  /* label قبل از select در HTML */
+}
+.float-select select {
+  padding-top: 0.85rem;
+}

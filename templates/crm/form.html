@@ -1,15 +1,30 @@
 {% extends "base.html" %}
 {% block extra_head %}{{ form.media }}{% endblock %}
 {% block content %}
-<section class="max-w-xl mx-auto px-4 py-10">
-  <h1 class="text-xl font-extrabold mb-6 text-center">{{ title }}</h1>
-  <form method="post" class="bg-white rounded-3xl shadow-lg border p-6 space-y-4">
-    {% csrf_token %}
-    {% include "crm/_form_fields.html" %}
-    <button class="w-full rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white font-bold py-3">ذخیره</button>
-    {% if extra_button %}
-    <button name="save_add_task" value="1" class="w-full rounded-xl border border-brand-blue-600 text-brand-blue-700 hover:bg-brand-blue-50 font-bold py-3">{{ extra_button }}</button>
-    {% endif %}
-  </form>
+<section class="max-w-3xl mx-auto px-4 py-10">
+  <div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+    <div class="bg-gradient-to-l from-brand-blue-600 to-brand-blue-700 px-6 py-5 text-white">
+      <h1 class="text-xl font-extrabold">{{ title }}</h1>
+      <p class="text-sm text-brand-blue-100 mt-1">فیلدهای ستاره‌دار الزامی هستند</p>
+    </div>
+
+    <form method="post" class="p-6 md:p-8">
+      {% csrf_token %}
+      {% include "crm/_form_fields.html" %}
+
+      <div class="mt-8 flex flex-col sm:flex-row gap-3">
+        <button type="submit"
+                class="flex-1 rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white font-bold py-3 transition">
+          ذخیره
+        </button>
+        {% if extra_button %}
+        <button type="submit" name="save_add_task" value="1"
+                class="flex-1 rounded-xl border-2 border-brand-blue-600 text-brand-blue-700 hover:bg-brand-blue-50 font-bold py-3 transition">
+          {{ extra_button }}
+        </button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
 </section>
 {% endblock %}
