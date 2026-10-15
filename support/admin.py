@@ -43,7 +43,7 @@ class RepairCaseAdmin(admin.ModelAdmin):
             "fields": ("status", "technician_notes", "estimated_cost", "delivered_at"),
         }),
         ("زمان‌ها", {
-            "fields": ("received_at_jalali", "updated_at"),
+            "fields": ("received_at_jalali", "updated_at_jalali"),
         }),
     )
 
