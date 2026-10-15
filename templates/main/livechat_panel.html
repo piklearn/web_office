@@ -1,0 +1,61 @@
+{# پنل گفتگوی فعال — بعد از start #}
+<div class="flex flex-col h-full" id="livechat-panel-inner">
+  <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-l from-brand-blue-600 to-brand-blue-700 text-white rounded-t-2xl">
+    <div class="flex items-center gap-2">
+      <span class="relative flex h-2.5 w-2.5">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400"></span>
+      </span>
+      <div>
+        <div class="text-sm font-bold">پشتیبانی آنلاین</div>
+        <div class="text-[10px] opacity-80">{{ conversation.visitor_name }}</div>
+      </div>
+    </div>
+    <button type="button" onclick="document.getElementById('livechat-panel').classList.add('hidden')"
+            class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition" title="بستن">
+      ✕
+    </button>
+  </div>
+
+  <div id="livechat-messages"
+       class="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50"
+       style="min-height: 220px; max-height: 280px;"
+       hx-get="{% url 'main:livechat_poll' %}"
+       hx-trigger="every 4s"
+       hx-swap="innerHTML"
+       hx-on::after-swap="this.scrollTop = this.scrollHeight; if(window.LiveChatSound) LiveChatSound.checkNewMessages(this);">
+    {% include "main/_livechat_messages.html" %}
+  </div>
+
+  <form class="p-3 border-t border-slate-100 bg-white rounded-b-2xl"
+        hx-post="{% url 'main:livechat_send' %}"
+        hx-target="#livechat-messages"
+        hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.successful && window.LiveChatSound){ LiveChatSound.send(); }
+          this.reset();
+          var el=document.getElementById('livechat-messages');
+          if(el){ el.scrollTop=99999; if(window.LiveChatSound) LiveChatSound.resetCount(el); }">
+    {% csrf_token %}
+    <div class="flex gap-2">
+      <input name="text" maxlength="2000" autocomplete="off" required
+             placeholder="پیام خود را بنویسید..."
+             class="flex-1 min-w-0 text-sm rounded-xl border border-slate-200 bg-slate-50
+                    px-3 py-2.5 outline-none focus:border-brand-blue-400 focus:ring-2
+                    focus:ring-brand-blue-100 placeholder:text-slate-400">
+      <button type="submit"
+              class="shrink-0 rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white
+                     text-sm font-bold px-4 py-2.5 transition shadow-sm">
+        ارسال
+      </button>
+    </div>
+  </form>
+</div>
+<script>
+  (function(){
+    var el = document.getElementById('livechat-messages');
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+      if (window.LiveChatSound) LiveChatSound.resetCount(el);
+    }
+  })();
+</script>

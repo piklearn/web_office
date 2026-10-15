@@ -34,4 +34,8 @@ urlpatterns = [
     path("me/alerts/", views.alerts_poll, name="alerts_poll"),
     path("chat/<int:thread_id>/messages/", views.chat_messages_partial, name="chat_messages"),
     path("chat/users/", views.chat_users_partial, name="chat_users_partial"),
+    path("livechat/", views.livechat_inbox, name="livechat_inbox"),
+    path("livechat/<int:conv_id>/send/", views.livechat_staff_send, name="livechat_staff_send"),
+    path("livechat/<int:conv_id>/poll/", views.livechat_staff_poll, name="livechat_staff_poll"),
+    path("livechat/<int:conv_id>/close/", views.livechat_close, name="livechat_close"),
 ]

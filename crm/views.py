@@ -780,3 +780,94 @@ def alerts_poll(request):
     ).count()
 
     return JsonResponse({"chat_unread": unread, "overdue": urgent})
+
+# ───────────── چت آنلاین بازدیدکنندگان ─────────────
+@login_required
+def livechat_inbox(request):
+    """لیست گفتگوهای باز بازدیدکنندگان + پنل پاسخ."""
+    from main.models import LiveChatConversation, LiveChatMessage
+
+    conversations = (
+        LiveChatConversation.objects.filter(status=LiveChatConversation.Status.OPEN)
+        .annotate(
+            unread=Count(
+                "messages",
+                filter=Q(messages__is_from_visitor=True, messages__read_by_staff=False),
+            )
+        )
+        .order_by("-last_message_at", "-created_at")
+    )
+    active_id = request.GET.get("c")
+    active = None
+    messages_list = []
+    if active_id:
+        active = get_object_or_404(LiveChatConversation, pk=active_id)
+        # علامت خوانده‌شدن
+        active.messages.filter(is_from_visitor=True, read_by_staff=False).update(read_by_staff=True)
+        if not active.assigned_to_id:
+            active.assigned_to = request.user
+            active.save(update_fields=["assigned_to"])
+        messages_list = list(active.messages.select_related("staff").all())
+
+    total_unread = LiveChatMessage.objects.filter(
+        is_from_visitor=True, read_by_staff=False,
+        conversation__status=LiveChatConversation.Status.OPEN,
+    ).count()
+
+    return render(request, "crm/livechat_inbox.html", {
+        "conversations": conversations,
+        "active": active,
+        "messages_list": messages_list,
+        "livechat_unread": total_unread,
+    })
+
+
+@login_required
+@require_POST
+def livechat_staff_send(request, conv_id):
+    from main.models import LiveChatConversation, LiveChatMessage
+
+    conv = get_object_or_404(LiveChatConversation, pk=conv_id)
+    text = (request.POST.get("text") or "").strip()
+    if not text:
+        return HttpResponseBadRequest("پیام خالی")
+    LiveChatMessage.objects.create(
+        conversation=conv,
+        is_from_visitor=False,
+        staff=request.user,
+        text=text[:2000],
+        read_by_staff=True,
+    )
+    conv.last_message_at = timezone.now()
+    if not conv.assigned_to_id:
+        conv.assigned_to = request.user
+    conv.save(update_fields=["last_message_at", "assigned_to", "updated_at"])
+    messages_list = list(conv.messages.select_related("staff").all())
+    return render(request, "crm/_livechat_staff_messages.html", {
+        "messages_list": messages_list,
+        "active": conv,
+    })
+
+
+@login_required
+def livechat_staff_poll(request, conv_id):
+    from main.models import LiveChatConversation
+
+    conv = get_object_or_404(LiveChatConversation, pk=conv_id)
+    conv.messages.filter(is_from_visitor=True, read_by_staff=False).update(read_by_staff=True)
+    messages_list = list(conv.messages.select_related("staff").all())
+    return render(request, "crm/_livechat_staff_messages.html", {
+        "messages_list": messages_list,
+        "active": conv,
+    })
+
+
+@login_required
+@require_POST
+def livechat_close(request, conv_id):
+    from main.models import LiveChatConversation
+
+    conv = get_object_or_404(LiveChatConversation, pk=conv_id)
+    conv.status = LiveChatConversation.Status.CLOSED
+    conv.save(update_fields=["status", "updated_at"])
+    return redirect("crm:livechat_inbox")

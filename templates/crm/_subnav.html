@@ -3,6 +3,10 @@
   <a href="{% url 'crm:dashboard' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'dashboard' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">داشبورد</a>
   <a href="{% url 'crm:customer_list' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'customer_list' or n == 'customer_detail' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">مشتریان</a>
   <a href="{% url 'crm:task_list' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'task_list' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">کارها</a>
+  <a href="{% url 'crm:livechat_inbox' %}" class="px-4 py-2 rounded-xl whitespace-nowrap relative {% if n == 'livechat_inbox' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
+    چت آنلاین
+    {% if livechat_unread %}<span class="absolute -top-1 -left-1 min-w-[1.1rem] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">{{ livechat_unread }}</span>{% endif %}
+  </a>
   {% if finance or manager %}<a href="{% url 'crm:reports' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'reports' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">گزارش‌ها</a>{% endif %}
 </nav>
 {% endwith %}

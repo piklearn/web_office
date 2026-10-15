@@ -77,3 +77,68 @@ class UserAvatar(models.Model):
 
     def __str__(self):
         return f"{self.user} — {self.avatar}"
+
+
+# ───────────── چت آنلاین با بازدیدکنندگان ─────────────
+class LiveChatConversation(models.Model):
+    """گفتگوی بازدیدکننده با تیم دفتر."""
+
+    class Status(models.TextChoices):
+        OPEN = "open", "باز"
+        CLOSED = "closed", "بسته"
+
+    session_key = models.CharField("کلید نشست", max_length=64, db_index=True)
+    visitor_name = models.CharField("نام بازدیدکننده", max_length=100)
+    visitor_phone = models.CharField("شماره تماس", max_length=30, blank=True)
+    status = models.CharField("وضعیت", max_length=10, choices=Status.choices,
+                              default=Status.OPEN, db_index=True)
+    assigned_to = models.ForeignKey(
+        "auth.User", verbose_name="مسئول پاسخ",
+        on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="livechat_assigned",
+    )
+    created_at = models.DateTimeField("شروع", auto_now_add=True)
+    updated_at = models.DateTimeField("آخرین فعالیت", auto_now=True)
+    last_message_at = models.DateTimeField("آخرین پیام", null=True, blank=True, db_index=True)
+
+    class Meta:
+        verbose_name = "گفتگوی آنلاین"
+        verbose_name_plural = "گفتگوهای آنلاین"
+        ordering = ["-last_message_at", "-created_at"]
+
+    def __str__(self):
+        return f"{self.visitor_name} ({self.get_status_display()})"
+
+    @property
+    def unread_for_staff(self):
+        return self.messages.filter(is_from_visitor=True, read_by_staff=False).count()
+
+
+class LiveChatMessage(models.Model):
+    conversation = models.ForeignKey(
+        LiveChatConversation, verbose_name="گفتگو",
+        on_delete=models.CASCADE, related_name="messages",
+    )
+    is_from_visitor = models.BooleanField("از طرف بازدیدکننده", default=True)
+    staff = models.ForeignKey(
+        "auth.User", verbose_name="کارمند",
+        on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="livechat_sent",
+    )
+    text = models.TextField("متن پیام", max_length=2000)
+    created_at = models.DateTimeField("زمان", auto_now_add=True)
+    read_by_staff = models.BooleanField("خوانده‌شده توسط کارمند", default=False)
+    read_by_visitor = models.BooleanField("خوانده‌شده توسط بازدیدکننده", default=False)
+
+    class Meta:
+        verbose_name = "پیام چت آنلاین"
+        verbose_name_plural = "پیام‌های چت آنلاین"
+        ordering = ["created_at"]
+
+    def __str__(self):
+        who = self.visitor_name if self.is_from_visitor else (self.staff or "کارمند")
+        return f"{who}: {self.text[:40]}"
+
+    @property
+    def visitor_name(self):
+        return self.conversation.visitor_name

@@ -5,7 +5,7 @@ from .models import Task, is_manager
 
 
 def crm_reminders(request):
-    """تعداد کارهای عقب‌افتاده و امروزِ کاربر (مدیر: همهٔ کارها) برای نشان کنار «پنل CRM»."""
+    """تعداد کارهای عقب‌افتاده و امروز + پیام‌های خوانده‌نشده چت بازدیدکننده."""
     user = getattr(request, "user", None)
     if user is None or not user.is_authenticated:
         return {}
@@ -17,4 +17,18 @@ def crm_reminders(request):
         overdue=Count("pk", filter=Q(due_date__lt=today)),
         today=Count("pk", filter=Q(due_date=today)),
     )
-    return {"crm_overdue_count": agg["overdue"], "crm_today_count": agg["today"]}
+    livechat_unread = 0
+    try:
+        from main.models import LiveChatMessage, LiveChatConversation
+        livechat_unread = LiveChatMessage.objects.filter(
+            is_from_visitor=True,
+            read_by_staff=False,
+            conversation__status=LiveChatConversation.Status.OPEN,
+        ).count()
+    except Exception:
+        pass
+    return {
+        "crm_overdue_count": agg["overdue"],
+        "crm_today_count": agg["today"],
+        "livechat_unread": livechat_unread,
+    }

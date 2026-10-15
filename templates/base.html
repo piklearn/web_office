@@ -338,5 +338,16 @@
   }
 </script>
 {% block extra_scripts %}{% endblock %}
+
+<script src="{% static 'js/livechat_sounds.js' %}"></script>
+<script src="{% static 'js/float_labels.js' %}"></script>
+{# ویجت چت آنلاین — فقط صفحات عمومی #}
+{% if not request.path|slice:":5" == "/crm/" and not request.path|slice:":7" == "/admin/" and not request.path|slice:":10" == "/accounts/" %}
+<div id="livechat-mount"
+     hx-get="{% url 'main:livechat_widget' %}"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+</div>
+{% endif %}
 </body>
 </html>

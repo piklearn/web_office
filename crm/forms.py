@@ -5,10 +5,8 @@ from .fields import JalaliDateField
 from support.widgets import CommaNumberInput
 from .models import (Customer, WorkGroup, Contact, CustomerSoftware, Payment, Request, Task, TaskStatus)
 
-BASE = (
-    "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-right "
-    "focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition"
-)
+# کلاس‌های اینپوت توسط CSS .float-field کنترل می‌شوند؛ فقط placeholder برای لیبل شناور لازم است.
+BASE = "w-full text-right outline-none"
 
 
 class StyledForm(forms.ModelForm):
@@ -17,12 +15,23 @@ class StyledForm(forms.ModelForm):
         for f in self.fields.values():
             w = f.widget
             if isinstance(w, forms.CheckboxInput):
+                w.attrs.setdefault("class", "rounded border-slate-300 text-sky-600 focus:ring-sky-500")
                 continue
-            prev = w.attrs.get("class", "")
-            w.attrs["class"] = f"{prev} {BASE}".strip()
-            # برای label شناور: placeholder خالی (یک فاصله)
+            # کلاس‌های بصری را CSS .float-field می‌دهد؛ فقط کلاس‌های منطقی را نگه دار
+            prev = (w.attrs.get("class") or "")
+            keep = []
+            for c in prev.split():
+                if c in ("jalali-date-input", "jalali-date", "comma-number") or c.startswith("js-"):
+                    keep.append(c)
+            keep.append("w-full")
+            keep.append("text-right")
+            keep.append("outline-none")
+            w.attrs["class"] = " ".join(dict.fromkeys(keep))
             if not isinstance(w, (forms.Select, forms.SelectMultiple)):
-                w.attrs.setdefault("placeholder", " ")
+                # فاصله برای :placeholder-shown
+                w.attrs["placeholder"] = w.attrs.get("placeholder") or " "
+                if not str(w.attrs["placeholder"]).strip() and "jalali" not in " ".join(keep):
+                    w.attrs["placeholder"] = " "
 
 
 class CustomerForm(StyledForm):

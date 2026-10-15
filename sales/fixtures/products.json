@@ -1,0 +1,477 @@
+[
+  {
+    "model": "sales.currency",
+    "pk": 1,
+    "fields": {
+      "code": "IRT",
+      "name": "تومان",
+      "symbol": "تومان",
+      "rate_to_toman": "1.00",
+      "is_default": true,
+      "auto_update": false,
+      "is_active": true,
+      "updated_at": "2025-01-01T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.currency",
+    "pk": 2,
+    "fields": {
+      "code": "USD",
+      "name": "دلار آمریکا",
+      "symbol": "$",
+      "rate_to_toman": "80000.00",
+      "is_default": false,
+      "auto_update": false,
+      "is_active": true,
+      "updated_at": "2025-01-01T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.currency",
+    "pk": 3,
+    "fields": {
+      "code": "AED",
+      "name": "درهم امارات",
+      "symbol": "د.إ",
+      "rate_to_toman": "22000.00",
+      "is_default": false,
+      "auto_update": false,
+      "is_active": true,
+      "updated_at": "2025-01-01T12:00:00Z"
+    }
+  },
+
+  {
+    "model": "sales.category",
+    "pk": 1,
+    "fields": {
+      "name": "لوازم جانبی کامپیوتر",
+      "slug": "computer-accessories"
+    }
+  },
+  {
+    "model": "sales.category",
+    "pk": 2,
+    "fields": {
+      "name": "صوتی و تصویری",
+      "slug": "audio-video"
+    }
+  },
+  {
+    "model": "sales.category",
+    "pk": 3,
+    "fields": {
+      "name": "تجهیزات کامپیوتری",
+      "slug": "computer-equipment"
+    }
+  },
+  {
+    "model": "sales.category",
+    "pk": 4,
+    "fields": {
+      "name": "حافظه و کابل",
+      "slug": "storage-cables"
+    }
+  },
+  {
+    "model": "sales.category",
+    "pk": 5,
+    "fields": {
+      "name": "لوازم قابل‌حمل",
+      "slug": "portable-devices"
+    }
+  },
+
+  {
+    "model": "sales.product",
+    "pk": 1,
+    "fields": {
+      "name": "کیبورد مکانیکی",
+      "slug": "mechanical-keyboard",
+      "category": 1,
+      "sku": "KB-001",
+      "short_description": "کیبورد مکانیکی با نور پس‌زمینه",
+      "description": "کیبورد مکانیکی مناسب کار و بازی، با اتصال USB.",
+      "price": "2500000.00",
+      "currency": 1,
+      "stock": 12,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-01T12:00:00Z",
+      "updated_at": "2025-01-01T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 2,
+    "fields": {
+      "name": "ماوس بی‌سیم",
+      "slug": "wireless-mouse",
+      "category": 1,
+      "sku": "MS-001",
+      "short_description": "ماوس بی‌سیم با حسگر دقیق",
+      "description": "ماوس بی‌سیم با دانگل USB و طراحی ارگونومیک.",
+      "price": "850000.00",
+      "currency": 1,
+      "stock": 25,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-02T12:00:00Z",
+      "updated_at": "2025-01-02T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 3,
+    "fields": {
+      "name": "هدفون روگوشی",
+      "slug": "over-ear-headphones",
+      "category": 2,
+      "sku": "HP-001",
+      "short_description": "هدفون روگوشی با میکروفون",
+      "description": "هدفون مناسب تماس و موسیقی با اتصال سیمی.",
+      "price": "1750000.00",
+      "currency": 1,
+      "stock": 8,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-03T12:00:00Z",
+      "updated_at": "2025-01-03T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 4,
+    "fields": {
+      "name": "پایه خنک‌کننده لپ‌تاپ",
+      "slug": "laptop-cooling-pad",
+      "category": 3,
+      "sku": "LP-001",
+      "short_description": "پایه خنک‌کننده با فن کم‌صدا",
+      "description": "پایه مناسب لپ‌تاپ‌های تا ۱۵ اینچ با اتصال USB.",
+      "price": "1200000.00",
+      "currency": 1,
+      "stock": 10,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-04T12:00:00Z",
+      "updated_at": "2025-01-04T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 5,
+    "fields": {
+      "name": "فلش مموری ۶۴ گیگابایت",
+      "slug": "usb-flash-64gb",
+      "category": 4,
+      "sku": "USB-064",
+      "short_description": "فلش مموری با ظرفیت ۶۴ گیگابایت",
+      "description": "فلش مموری کوچک و قابل‌حمل برای انتقال فایل‌ها.",
+      "price": "450000.00",
+      "currency": 1,
+      "stock": 40,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-05T12:00:00Z",
+      "updated_at": "2025-01-05T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 6,
+    "fields": {
+      "name": "وب‌کم Full HD",
+      "slug": "full-hd-webcam",
+      "category": 2,
+      "sku": "WC-1080",
+      "short_description": "وب‌کم با کیفیت تصویر Full HD",
+      "description": "وب‌کم مناسب جلسات آنلاین با میکروفون داخلی.",
+      "price": "2100000.00",
+      "currency": 1,
+      "stock": 7,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-06T12:00:00Z",
+      "updated_at": "2025-01-06T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 7,
+    "fields": {
+      "name": "اسپیکر بلوتوثی",
+      "slug": "bluetooth-speaker",
+      "category": 5,
+      "sku": "SP-BT01",
+      "short_description": "اسپیکر قابل‌حمل با اتصال بلوتوث",
+      "description": "اسپیکر بلوتوثی مناسب خانه و سفر.",
+      "price": "1650000.00",
+      "currency": 1,
+      "stock": 14,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-07T12:00:00Z",
+      "updated_at": "2025-01-07T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 8,
+    "fields": {
+      "name": "مانیتور ۲۴ اینچ",
+      "slug": "monitor-24-inch",
+      "category": 3,
+      "sku": "MN-024",
+      "short_description": "مانیتور ۲۴ اینچ با پنل IPS",
+      "description": "مانیتور مناسب کار روزمره و استفاده اداری.",
+      "price": "7800000.00",
+      "currency": 1,
+      "stock": 5,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-08T12:00:00Z",
+      "updated_at": "2025-01-08T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 9,
+    "fields": {
+      "name": "کابل USB-C",
+      "slug": "usb-c-cable",
+      "category": 4,
+      "sku": "CB-USBC-01",
+      "short_description": "کابل USB-C به طول یک متر",
+      "description": "کابل مناسب شارژ و انتقال داده.",
+      "price": "220000.00",
+      "currency": 1,
+      "stock": 60,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-09T12:00:00Z",
+      "updated_at": "2025-01-09T12:00:00Z"
+    }
+  },
+  {
+    "model": "sales.product",
+    "pk": 10,
+    "fields": {
+      "name": "پاوربانک ۲۰۰۰۰ میلی‌آمپر",
+      "slug": "power-bank-20000",
+      "category": 5,
+      "sku": "PB-20000",
+      "short_description": "پاوربانک با ظرفیت ۲۰۰۰۰ میلی‌آمپر",
+      "description": "پاوربانک قابل‌حمل با چند درگاه خروجی USB.",
+      "price": "2450000.00",
+      "currency": 1,
+      "stock": 9,
+      "image": "",
+      "is_active": true,
+      "created_at": "2025-01-10T12:00:00Z",
+      "updated_at": "2025-01-10T12:00:00Z"
+    }
+  },
+
+  {
+    "model": "sales.productfeature",
+    "pk": 1,
+    "fields": {
+      "product": 1,
+      "title": "نوع اتصال",
+      "value": "USB",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 2,
+    "fields": {
+      "product": 1,
+      "title": "نورپردازی",
+      "value": "RGB",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 3,
+    "fields": {
+      "product": 2,
+      "title": "نوع اتصال",
+      "value": "بی‌سیم با دانگل USB",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 4,
+    "fields": {
+      "product": 2,
+      "title": "نوع حسگر",
+      "value": "اپتیکال",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 5,
+    "fields": {
+      "product": 3,
+      "title": "نوع اتصال",
+      "value": "جک ۳.۵ میلی‌متری",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 6,
+    "fields": {
+      "product": 3,
+      "title": "میکروفون",
+      "value": "داخلی",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 7,
+    "fields": {
+      "product": 4,
+      "title": "سازگاری",
+      "value": "لپ‌تاپ تا ۱۵ اینچ",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 8,
+    "fields": {
+      "product": 4,
+      "title": "تغذیه فن",
+      "value": "USB",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 9,
+    "fields": {
+      "product": 5,
+      "title": "ظرفیت",
+      "value": "۶۴ گیگابایت",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 10,
+    "fields": {
+      "product": 5,
+      "title": "نوع رابط",
+      "value": "USB",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 11,
+    "fields": {
+      "product": 6,
+      "title": "وضوح تصویر",
+      "value": "Full HD",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 12,
+    "fields": {
+      "product": 6,
+      "title": "میکروفون",
+      "value": "داخلی",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 13,
+    "fields": {
+      "product": 7,
+      "title": "نوع اتصال",
+      "value": "بلوتوث",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 14,
+    "fields": {
+      "product": 7,
+      "title": "قابلیت حمل",
+      "value": "دارد",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 15,
+    "fields": {
+      "product": 8,
+      "title": "اندازه صفحه",
+      "value": "۲۴ اینچ",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 16,
+    "fields": {
+      "product": 8,
+      "title": "نوع پنل",
+      "value": "IPS",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 17,
+    "fields": {
+      "product": 9,
+      "title": "طول کابل",
+      "value": "۱ متر",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 18,
+    "fields": {
+      "product": 9,
+      "title": "نوع رابط",
+      "value": "USB-C",
+      "order": 2
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 19,
+    "fields": {
+      "product": 10,
+      "title": "ظرفیت",
+      "value": "۲۰۰۰۰ میلی‌آمپر ساعت",
+      "order": 1
+    }
+  },
+  {
+    "model": "sales.productfeature",
+    "pk": 20,
+    "fields": {
+      "product": 10,
+      "title": "درگاه خروجی",
+      "value": "USB",
+      "order": 2
+    }
+  }
+]

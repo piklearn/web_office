@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SiteSettings
+from .models import SiteSettings, LiveChatConversation, LiveChatMessage
 
 
 @admin.register(SiteSettings)
@@ -27,8 +27,28 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     )
 
     def has_add_permission(self, request):
-        # فقط یک رکورد تنظیمات مجاز است
         return not SiteSettings.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+class LiveChatMessageInline(admin.TabularInline):
+    model = LiveChatMessage
+    extra = 0
+    readonly_fields = ("is_from_visitor", "staff", "text", "created_at", "read_by_staff", "read_by_visitor")
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(LiveChatConversation)
+class LiveChatConversationAdmin(admin.ModelAdmin):
+    list_display = ("visitor_name", "visitor_phone", "status", "assigned_to",
+                    "unread_for_staff", "last_message_at", "created_at")
+    list_filter = ("status",)
+    search_fields = ("visitor_name", "visitor_phone", "session_key")
+    readonly_fields = ("session_key", "created_at", "updated_at", "last_message_at")
+    inlines = [LiveChatMessageInline]
+    date_hierarchy = "created_at"
