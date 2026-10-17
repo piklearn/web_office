@@ -1,0 +1,5 @@
+{% for m in chat_messages %}
+  {% include "crm/_chat_message.html" %}
+{% empty %}
+<p class="text-xs text-stone-400 text-center py-6">پیامی نیست — سلام کنید.</p>
+{% endfor %}

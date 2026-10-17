@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" {% if crm_theme %}data-crm-theme="{{ crm_theme }}"{% endif %}>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -67,8 +67,9 @@
 </style>
 <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
 {% block extra_head %}{% endblock %}
+{% if crm_theme_css %}<style id="crm-user-theme">{{ crm_theme_css|safe }}</style>{% endif %}
 </head>
-<body class="bg-slate-50 text-slate-800 overflow-x-hidden" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body class="bg-slate-50 text-slate-800 overflow-x-hidden" {% if crm_theme %}data-crm-theme="{{ crm_theme }}"{% endif %} hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
 <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

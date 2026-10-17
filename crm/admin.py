@@ -6,7 +6,8 @@ from django import forms
 from .models import WorkGroup
 
 from .models import (Activity, Contact, Customer, CustomerSoftware, EmployeeProfile,
-                     Payment, Request, Software, Task, can_see_finance, is_manager)
+                     Payment, Request, Software, Task, UserCRMSettings,
+                     can_see_finance, is_manager)
 
 
 class ContactInline(admin.TabularInline):
@@ -119,3 +120,10 @@ class WorkGroupAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
     search_fields = ("name",)
     filter_horizontal = ("members",)
+
+@admin.register(UserCRMSettings)
+class UserCRMSettingsAdmin(admin.ModelAdmin):
+    list_display = ("user", "theme", "is_configured", "updated_at")
+    list_filter = ("theme", "is_configured")
+    search_fields = ("user__username", "user__first_name", "user__last_name")
+    readonly_fields = ("updated_at",)

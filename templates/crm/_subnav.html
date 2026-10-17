@@ -8,5 +8,6 @@
     {% if livechat_unread %}<span class="absolute -top-1 -left-1 min-w-[1.1rem] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">{{ livechat_unread }}</span>{% endif %}
   </a>
   {% if finance or manager %}<a href="{% url 'crm:reports' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'reports' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">گزارش‌ها</a>{% endif %}
+  <a href="{% url 'crm:user_settings' %}" class="px-4 py-2 rounded-xl whitespace-nowrap {% if n == 'user_settings' %}bg-brand-blue-600 text-white font-bold{% else %}text-slate-600 hover:bg-slate-50{% endif %}">تنظیمات</a>
 </nav>
 {% endwith %}

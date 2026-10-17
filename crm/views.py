@@ -21,11 +21,12 @@ from django.views.decorators.http import require_POST
 from .excel import (apply_import, build_full_workbook, build_raw_workbook,
                     build_template_workbook, parse_import_file)
 from .forms import (ContactForm, CustomerForm, CustomerSoftwareForm, PaymentForm,
-                    RequestForm, TaskForm, TaskResultForm)
+                    RequestForm, TaskForm, TaskResultForm, UserCRMSettingsForm)
 from .models import (
-    ChatMessage, ChatThread, ChatThread, Customer, CustomerStatus, Payment, Request, Software, Task, TaskStatus,
+    ChatMessage, ChatThread, Customer, CustomerStatus, Payment, Request, Software, Task, TaskStatus,
     PersonalNote, PersonalTodo, CustomerSoftware, can_see_finance, is_manager,
     can_create_task, can_edit_task, can_delete_task, can_update_status,
+    UserCRMSettings, DEFAULT_DASHBOARD_WIDGETS, DEFAULT_CUSTOMER_LIST_FIELDS,
 )
 
 JALALI_MONTHS = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
@@ -91,8 +92,27 @@ def get_or_create_thread(u1, u2):
     return thread
 
 # ───────────── داشبورد و کارها ─────────────
+
+def _crm_settings(user):
+    """تنظیمات CRM کاربر؛ در صورت نبود ساخته می‌شود."""
+    return UserCRMSettings.for_user(user)
+
+
+def _require_crm_settings(request):
+    """اگر کاربر هنوز تنظیمات اولیه را انجام نداده، به صفحه تنظیمات هدایت شود."""
+    if not request.user.is_authenticated:
+        return None
+    s = _crm_settings(request.user)
+    if not s.is_configured:
+        return redirect("crm:user_settings")
+    return None
+
 @login_required
 def dashboard(request):
+    redir = _require_crm_settings(request)
+    if redir:
+        return redir
+    settings_obj = _crm_settings(request.user)
     today = timezone.localdate()
     mine = _visible_tasks(request.user)
     overdue = mine.filter(due_date__lt=today)
@@ -157,8 +177,9 @@ def dashboard(request):
             active_chat_user = peer
             active_thread = get_or_create_thread(request.user, peer)
             chat_messages = list(
-                active_thread.messages.select_related("sender").order_by("created_at")[:100]
+                active_thread.messages.select_related("sender").order_by("-created_at")[:100]
             )
+            chat_messages.reverse()
             # خوانده‌شده
             active_thread.messages.filter(read_at__isnull=True).exclude(sender=request.user).update(
                 read_at=timezone.now()
@@ -206,20 +227,28 @@ def dashboard(request):
         "labels": [jdatetime.date.fromgregorian(date=d).strftime("%m/%d") for d in days],
         "values": [done_by_day.get(d, 0) for d in days]}
 
-    sections = [
-        {"title": " عقب‌افتاده", "cls": "text-red-600", "tasks": overdue},
-        {"title": "امروز", "cls": "text-orange-500", "tasks": due_today},
-        {"title": " فردا", "cls": "text-yellow-600", "tasks": tomorrow},
-        {"title": " منتظر مشتری", "cls": "text-sky-600", "tasks": waiting},
-        {"title": "نیاز به پیگیری", "cls": "text-red-500", "tasks": needs},
+    all_sections = [
+        {"key": "section_overdue", "title": " عقب‌افتاده", "cls": "text-red-600", "tasks": overdue},
+        {"key": "section_today", "title": "امروز", "cls": "text-orange-500", "tasks": due_today},
+        {"key": "section_tomorrow", "title": " فردا", "cls": "text-yellow-600", "tasks": tomorrow},
+        {"key": "section_waiting", "title": " منتظر مشتری", "cls": "text-sky-600", "tasks": waiting},
+        {"key": "section_needs", "title": "نیاز به پیگیری", "cls": "text-red-500", "tasks": needs},
     ]
+    sections = [s for s in all_sections if settings_obj.has_widget(s["key"])]
+    widgets = set(settings_obj.dashboard_widgets or DEFAULT_DASHBOARD_WIDGETS)
     ctx = {
         "customers_count": Customer.objects.count(),
         "total_open": mine.count(),
         "overdue_count": overdue.count(), "today_count": due_today.count(),
         "waiting_count": waiting.count(),
-        "sections": sections, "next_task": next_task,
+        "sections": sections,
+        "next_task": next_task if settings_obj.has_widget("next_task") else None,
         "charts": {"status": status_chart, "done": done_chart},
+        "show_stats": settings_obj.has_widget("stats"),
+        "show_charts": settings_obj.has_widget("charts"),
+        "show_side_clock": settings_obj.has_widget("side_clock"),
+        "show_side_note": settings_obj.has_widget("side_note"),
+        "show_side_chat": settings_obj.has_widget("side_chat"),
         "manager": is_manager(request.user), "finance": can_see_finance(request.user),
         "personal_note": note,
         "personal_todos": todos,
@@ -233,12 +262,16 @@ def dashboard(request):
         "active_chat_user": active_chat_user,
         "chat_messages": chat_messages,
         "chat_unread": chat_unread,
+        "crm_user_settings": settings_obj,
     }
     return render(request, "crm/dashboard.html", ctx)
 
 
 @login_required
 def task_list(request):
+    redir = _require_crm_settings(request)
+    if redir:
+        return redir
     today = timezone.localdate()
     qs = _visible_tasks(request.user)
     status = request.GET.get("status")
@@ -292,11 +325,15 @@ CUSTOMER_SORTS = {"newest": ("-created_at", "جدیدترین"), "name": ("full_
 
 @login_required
 def customer_list(request):
+    redir = _require_crm_settings(request)
+    if redir:
+        return redir
+    settings_obj = _crm_settings(request.user)
     finance = can_see_finance(request.user)
     qs = Customer.objects.all().annotate(
         open_tasks_count=Count("tasks", filter=~Q(tasks__status__in=Task.CLOSED), distinct=True),
         open_requests=Count("requests", distinct=True),
-    )
+    ).prefetch_related("softwares__software", "owner")
     if finance:
         qs = _with_remaining(qs)
 
@@ -361,7 +398,9 @@ def customer_list(request):
            "statuses": CustomerStatus.choices, "softwares": Software.objects.all(),
            "flt": flt, "status": status, "software": software, "finance": finance,
            "sorts": sorts, "sort": sort, "chips": chips, "base_qs": params.urlencode(),
-           "filters": [(k, v) for k, v in CUSTOMER_FILTERS.items() if k != "debtor" or finance]}
+           "filters": [(k, v) for k, v in CUSTOMER_FILTERS.items() if k != "debtor" or finance],
+           "crm_user_settings": settings_obj,
+           "list_fields": set(settings_obj.customer_list_fields or DEFAULT_CUSTOMER_LIST_FIELDS)}
     return render(request, "crm/customer_list.html", ctx)
 
 
@@ -503,6 +542,9 @@ def task_claim(request, pk):
 # ───────────── گزارش‌ها ─────────────
 @login_required
 def reports(request):
+    redir = _require_crm_settings(request)
+    if redir:
+        return redir
     """گزارش ساده فروش، بدهکاران، تبدیل نرم‌افزارها و عملکرد کارکنان."""
     if not can_see_finance(request.user):
         raise PermissionDenied
@@ -723,7 +765,10 @@ def chat_send(request, thread_id):
     )
     thread.save(update_fields=["updated_at"])  # برای مرتب‌سازی لیست
     if _is_htmx(request):
-        messages = thread.messages.select_related("sender").order_by("created_at")[:100]
+        messages = list(
+            thread.messages.select_related("sender").order_by("-created_at")[:100]
+        )
+        messages.reverse()
         return render(request, "crm/_chat_messages_list.html", {
             "chat_messages": messages,
             "active_thread": thread,
@@ -739,7 +784,10 @@ def chat_messages_partial(request, thread_id):
     thread.messages.filter(read_at__isnull=True).exclude(sender=request.user).update(
         read_at=timezone.now()
     )
-    messages = thread.messages.select_related("sender").order_by("created_at")[:100]
+    messages = list(
+        thread.messages.select_related("sender").order_by("-created_at")[:100]
+    )
+    messages.reverse()
     return render(request, "crm/_chat_messages_list.html", {
         "chat_messages": messages,
         "active_thread": thread,
@@ -765,7 +813,15 @@ def chat_users_partial(request):
 
     for u in chat_users:
         u.unread_count = unread_map.get(u.pk, 0)
-    return render(request, "crm/_chat_users.html", {"chat_users": chat_users, "unread_map": unread_map})
+    active_chat_user = None
+    peer_id = request.GET.get("chat")
+    if peer_id and peer_id.isdigit():
+        active_chat_user = next((u for u in chat_users if u.pk == int(peer_id)), None)
+    return render(request, "crm/_chat_users.html", {
+        "chat_users": chat_users,
+        "unread_map": unread_map,
+        "active_chat_user": active_chat_user,
+    })
 # ───────────── هشدارها ─────────────
 @login_required
 def alerts_poll(request):
@@ -784,6 +840,9 @@ def alerts_poll(request):
 # ───────────── چت آنلاین بازدیدکنندگان ─────────────
 @login_required
 def livechat_inbox(request):
+    redir = _require_crm_settings(request)
+    if redir:
+        return redir
     """لیست گفتگوهای باز بازدیدکنندگان + پنل پاسخ."""
     from main.models import LiveChatConversation, LiveChatMessage
 
@@ -871,3 +930,26 @@ def livechat_close(request, conv_id):
     conv.status = LiveChatConversation.Status.CLOSED
     conv.save(update_fields=["status", "updated_at"])
     return redirect("crm:livechat_inbox")
+
+@login_required
+def user_settings(request):
+    """صفحه تنظیمات شخصی CRM — در اولین ورود اجباری، بعداً قابل ویرایش."""
+    settings_obj = _crm_settings(request.user)
+    first_time = not settings_obj.is_configured
+
+    if request.method == "POST":
+        form = UserCRMSettingsForm(request.POST, instance=settings_obj)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "تنظیمات با موفقیت ذخیره شد.")
+            return redirect("crm:dashboard")
+    else:
+        form = UserCRMSettingsForm(instance=settings_obj)
+
+    return render(request, "crm/user_settings.html", {
+        "form": form,
+        "first_time": first_time,
+        "settings_obj": settings_obj,
+        "manager": is_manager(request.user),
+        "finance": can_see_finance(request.user),
+    })

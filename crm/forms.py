@@ -114,3 +114,55 @@ class TaskResultForm(StyledForm):
             "due_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "due_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
         }
+
+from .models import (
+    UserCRMSettings, ThemeChoice, DASHBOARD_WIDGET_CHOICES, CUSTOMER_LIST_FIELD_CHOICES,
+    DEFAULT_DASHBOARD_WIDGETS, DEFAULT_CUSTOMER_LIST_FIELDS,
+)
+
+
+class UserCRMSettingsForm(forms.Form):
+    theme = forms.ChoiceField(
+        label="تم ظاهری",
+        choices=ThemeChoice.choices,
+        widget=forms.RadioSelect,
+    )
+    dashboard_widgets = forms.MultipleChoiceField(
+        label="موارد نمایش در داشبورد اصلی",
+        choices=DASHBOARD_WIDGET_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
+    customer_list_fields = forms.MultipleChoiceField(
+        label="موارد کنار نام مشتری در لیست مشتریان",
+        choices=CUSTOMER_LIST_FIELD_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
+
+    def __init__(self, *args, instance=None, **kwargs):
+        self.instance = instance
+        initial = kwargs.pop("initial", {}) or {}
+        if instance is not None:
+            initial.setdefault("theme", instance.theme)
+            initial.setdefault(
+                "dashboard_widgets",
+                instance.dashboard_widgets or list(DEFAULT_DASHBOARD_WIDGETS),
+            )
+            initial.setdefault(
+                "customer_list_fields",
+                instance.customer_list_fields or list(DEFAULT_CUSTOMER_LIST_FIELDS),
+            )
+        kwargs["initial"] = initial
+        super().__init__(*args, **kwargs)
+
+    def save(self):
+        obj = self.instance
+        if obj is None:
+            raise ValueError("instance required")
+        obj.theme = self.cleaned_data["theme"]
+        obj.dashboard_widgets = list(self.cleaned_data.get("dashboard_widgets") or [])
+        obj.customer_list_fields = list(self.cleaned_data.get("customer_list_fields") or [])
+        obj.is_configured = True
+        obj.save()
+        return obj

@@ -423,3 +423,106 @@ class ChatMessage(models.Model):
 
     class Meta:
         ordering = ["created_at"]
+
+# ───────────── تنظیمات شخصی هر کاربر در CRM ─────────────
+class ThemeChoice(models.TextChoices):
+    DEFAULT = "default", "پیش‌فرض (آبی)"
+    OCEAN = "ocean", "اقیانوس"
+    FOREST = "forest", "جنگلی"
+    SUNSET = "sunset", "غروب"
+    PURPLE = "purple", "بنفش"
+    ROSE = "rose", "صورتی"
+    DARK = "dark", "تیره"
+
+
+# ویجت‌های قابل نمایش در داشبورد اصلی
+DASHBOARD_WIDGET_CHOICES = [
+    ("stats", "کارت‌های آمار (مشتریان، پیگیری‌ها، …)"),
+    ("next_task", "کار بعدی من"),
+    ("charts", "نمودارها (وضعیت مشتریان و کارهای انجام‌شده)"),
+    ("section_overdue", "بخش کارهای عقب‌افتاده"),
+    ("section_today", "بخش کارهای امروز"),
+    ("section_tomorrow", "بخش کارهای فردا"),
+    ("section_waiting", "بخش منتظر مشتری"),
+    ("section_needs", "بخش نیاز به پیگیری"),
+    ("side_clock", "ساعت و پیام انگیزشی (ستون کناری)"),
+    ("side_note", "دفترچه یادداشت و کارهای شخصی"),
+    ("side_chat", "پیام‌رسان داخلی"),
+]
+
+DEFAULT_DASHBOARD_WIDGETS = [k for k, _ in DASHBOARD_WIDGET_CHOICES]
+
+# فیلدهایی که کنار نام مشتری در لیست مشتریان نمایش داده می‌شوند
+CUSTOMER_LIST_FIELD_CHOICES = [
+    ("mobile", "موبایل"),
+    ("landline", "تلفن ثابت"),
+    ("company", "نام شرکت"),
+    ("softwares", "نرم‌افزار(ها)"),
+    ("status", "وضعیت مشتری"),
+    ("payment_status", "وضعیت پرداخت"),
+    ("owner", "کارمند مسئول"),
+    ("activity_type", "نوع فعالیت"),
+    ("national_id", "کد ملی"),
+    ("open_tasks", "تعداد کار باز"),
+    ("remaining", "مانده بدهی"),
+]
+
+DEFAULT_CUSTOMER_LIST_FIELDS = ["mobile", "status", "open_tasks"]
+
+
+class UserCRMSettings(models.Model):
+    """تنظیمات شخصی هر کاربر برای ظاهر و داشبورد CRM."""
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="crm_settings", verbose_name="کاربر"
+    )
+    theme = models.CharField(
+        "تم", max_length=20, choices=ThemeChoice.choices, default=ThemeChoice.DEFAULT
+    )
+    dashboard_widgets = models.JSONField(
+        "ویجت‌های داشبورد", default=list, blank=True,
+        help_text="لیست کلید ویجت‌هایی که در داشبورد اصلی نمایش داده شوند",
+    )
+    customer_list_fields = models.JSONField(
+        "فیلدهای کنار نام مشتری", default=list, blank=True,
+        help_text="فیلدهایی که کنار نام مشتری در لیست مشتریان نشان داده شوند",
+    )
+    is_configured = models.BooleanField(
+        "تنظیمات اولیه انجام شده", default=False,
+        help_text="اگر False باشد، کاربر برای اولین بار به صفحه تنظیمات هدایت می‌شود",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "تنظیمات CRM کاربر"
+        verbose_name_plural = "تنظیمات CRM کاربران"
+
+    def __str__(self):
+        return f"تنظیمات CRM — {self.user}"
+
+    def save(self, *args, **kwargs):
+        if not self.dashboard_widgets:
+            self.dashboard_widgets = list(DEFAULT_DASHBOARD_WIDGETS)
+        if not self.customer_list_fields:
+            self.customer_list_fields = list(DEFAULT_CUSTOMER_LIST_FIELDS)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def for_user(cls, user):
+        """گرفتن یا ساخت تنظیمات کاربر با مقادیر پیش‌فرض."""
+        obj, _ = cls.objects.get_or_create(
+            user=user,
+            defaults={
+                "dashboard_widgets": list(DEFAULT_DASHBOARD_WIDGETS),
+                "customer_list_fields": list(DEFAULT_CUSTOMER_LIST_FIELDS),
+                "is_configured": False,
+            },
+        )
+        return obj
+
+    def has_widget(self, key: str) -> bool:
+        widgets = self.dashboard_widgets or DEFAULT_DASHBOARD_WIDGETS
+        return key in widgets
+
+    def has_list_field(self, key: str) -> bool:
+        fields = self.customer_list_fields or DEFAULT_CUSTOMER_LIST_FIELDS
+        return key in fields

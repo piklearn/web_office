@@ -51,6 +51,7 @@ TEMPLATES = [
                 'main.context_processors.site_settings',
                 # شمارندهٔ یادآوری کارهای عقب‌افتاده / امروز برای کاربر واردشده
                 'crm.context_processors.crm_reminders',
+                'crm.context_processors.crm_user_theme',
             ],
         },
     },

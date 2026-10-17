@@ -16,11 +16,13 @@
     <h1 class="text-2xl font-extrabold">داشبورد</h1>
     <div class="flex gap-2 text-sm">
       <button type="button" id="compact-toggle" class="rounded-xl bg-white border px-4 py-2 font-bold">حالت فشرده</button>
+      <a href="{% url 'crm:user_settings' %}" class="rounded-xl bg-white border px-4 py-2 font-bold text-slate-600 hover:text-brand-blue-600">تنظیمات</a>
       <a href="{% url 'crm:customer_add' %}" class="rounded-xl bg-brand-blue-600 text-white px-4 py-2 font-bold">+ مشتری</a>
     </div>
   </div>
 
   {# کارت‌های آمار تمام‌عرض #}
+  {% if show_stats %}
   <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6 text-center">
     <a href="{% url 'crm:customer_list' %}" class="bg-white rounded-2xl border p-4 hover:border-brand-blue-400">
       <div class="text-2xl font-extrabold">{{ customers_count }}</div>
@@ -43,6 +45,7 @@
       <div class="text-xs text-slate-500">در انتظار مشتری</div>
     </a>
   </div>
+  {% endif %}
 
     {# دو ستون: راست = ساعت+دفترچه | چپ = محتوا #}
   <div class="grid lg:grid-cols-[300px_1fr] gap-6 items-start">
@@ -61,9 +64,9 @@
         class="space-y-4 overflow-hidden transition-all duration-300 ease-out
                 lg:!max-h-none lg:!opacity-100 lg:!block
                 max-h-0 opacity-0">
-      {% include "crm/_clock.html" %}
-      {% include "crm/_side_panel.html" %}
-      {% include "crm/_chat_panel.html" %}
+      {% if show_side_clock %}{% include "crm/_clock.html" %}{% endif %}
+      {% if show_side_note %}{% include "crm/_side_panel.html" %}{% endif %}
+      {% if show_side_chat %}{% include "crm/_chat_panel.html" %}{% endif %}
     </div>
     {# ── پایان ستون راست ── #}
 
@@ -76,6 +79,7 @@
       </div>
       {% endif %}
 
+      {% if show_charts %}
       <div class="grid md:grid-cols-2 gap-4">
         <div class="bg-white rounded-2xl border p-4">
           <h3 class="text-sm font-bold mb-2">وضعیت مشتریان</h3>
@@ -86,6 +90,7 @@
           <div class="h-48"><canvas id="chart-done"></canvas></div>
         </div>
       </div>
+      {% endif %}
 
       <div class="rounded-2xl border bg-white overflow-hidden">
         {% for sec in sections %}
@@ -119,7 +124,7 @@
 <audio id="alert-sound" preload="auto">
   <source src="{% static 'sounds/ping.mp3' %}" type="audio/mpeg">
 </audio>
-{{ charts|json_script:"charts-data" }}
+{% if show_charts %}{{ charts|json_script:"charts-data" }}{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -142,7 +147,9 @@
   if (!el) return;
   const d = JSON.parse(el.textContent);
   Chart.defaults.font.family = 'Vazirmatn, sans-serif';
-  new Chart(document.getElementById('chart-status'), {
+  const cs = document.getElementById('chart-status');
+  const cd = document.getElementById('chart-done');
+  if (cs) new Chart(cs, {
     type: 'doughnut',
     data: {
       labels: d.status.labels,
@@ -150,7 +157,7 @@
     },
     options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
-  new Chart(document.getElementById('chart-done'), {
+  if (cd) new Chart(cd, {
     type: 'bar',
     data: {
       labels: d.done.labels,

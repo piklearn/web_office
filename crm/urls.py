@@ -26,6 +26,7 @@ urlpatterns = [
     path("customers/export/", views.customer_export, name="customer_export"),
     path("customers/import/", views.customer_import, name="customer_import"),
     path("customers/import/template/", views.customer_import_template, name="customer_import_template"),
+    path("me/settings/", views.user_settings, name="user_settings"),
     path("me/note/", views.note_save, name="note_save"),
     path("me/todos/", views.todo_add, name="todo_add"),
     path("me/todos/<int:pk>/toggle/", views.todo_toggle, name="todo_toggle"),

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{% if first_time %}خوش آمدید — تنظیمات اولیه{% else %}تنظیمات CRM{% endif %} — {{ site_settings.site_name }}{% endblock %}
+{% block content %}
+<section class="max-w-3xl mx-auto px-4 py-10">
+  {% if not first_time %}
+    {% include "crm/_subnav.html" %}
+  {% endif %}
+
+  {% if first_time %}
+  <div class="mb-8 text-center">
+    <div class="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-brand-blue-100 text-brand-blue-700 text-3xl mb-4">⚙️</div>
+    <h1 class="text-2xl font-extrabold mb-2">به CRM خوش آمدید</h1>
+    <p class="text-slate-500 text-sm leading-relaxed">
+      قبل از شروع کار، ظاهر و داشبورد خود را شخصی‌سازی کنید.
+      بعداً می‌توانید این تنظیمات را از منوی «تنظیمات» تغییر دهید.
+    </p>
+  </div>
+  {% else %}
+  <div class="flex items-center justify-between mb-6 gap-2 flex-wrap">
+    <h1 class="text-2xl font-extrabold">تنظیمات شخصی CRM</h1>
+    <a href="{% url 'crm:dashboard' %}" class="text-sm text-slate-500 hover:text-brand-blue-600">بازگشت به داشبورد</a>
+  </div>
+  {% endif %}
+
+  <form method="post" class="space-y-8">
+    {% csrf_token %}
+
+    {# ── تم ── #}
+    <div class="bg-white rounded-2xl border p-5 sm:p-6">
+      <h2 class="font-extrabold text-lg mb-1">تم ظاهری</h2>
+      <p class="text-xs text-slate-400 mb-4">رنگ اصلی رابط کاربری CRM را انتخاب کنید.</p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {% for value, label in form.theme.field.choices %}
+        <label class="theme-card relative cursor-pointer rounded-xl border-2 p-3 transition-all
+                      {% if form.theme.value == value %}border-brand-blue-600 ring-2 ring-brand-blue-200{% else %}border-slate-200 hover:border-slate-300{% endif %}">
+          <input type="radio" name="theme" value="{{ value }}" class="sr-only"
+                 {% if form.theme.value == value %}checked{% endif %}>
+          <div class="flex items-center gap-3">
+            <span class="h-8 w-8 rounded-lg shrink-0
+              {% if value == 'default' %}bg-blue-500
+              {% elif value == 'ocean' %}bg-cyan-500
+              {% elif value == 'forest' %}bg-emerald-500
+              {% elif value == 'sunset' %}bg-orange-500
+              {% elif value == 'purple' %}bg-violet-500
+              {% elif value == 'rose' %}bg-rose-500
+              {% elif value == 'dark' %}bg-slate-800
+              {% endif %}"></span>
+            <span class="text-sm font-bold">{{ label }}</span>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# ── ویجت‌های داشبورد ── #}
+    <div class="bg-white rounded-2xl border p-5 sm:p-6">
+      <h2 class="font-extrabold text-lg mb-1">نمایش در داشبورد اصلی</h2>
+      <p class="text-xs text-slate-400 mb-4">مواردی که می‌خواهید در صفحه داشبورد دیده شوند را انتخاب کنید.</p>
+      <div class="space-y-2">
+        {% for value, label in form.dashboard_widgets.field.choices %}
+        <label class="flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50
+                      {% if value in form.dashboard_widgets.value %}border-brand-blue-300 bg-brand-blue-50/50{% else %}border-slate-200{% endif %}">
+          <input type="checkbox" name="dashboard_widgets" value="{{ value }}"
+                 class="h-4 w-4 rounded border-slate-300 text-brand-blue-600 focus:ring-brand-blue-500"
+                 {% if value in form.dashboard_widgets.value %}checked{% endif %}>
+          <span class="text-sm font-medium">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# ── فیلدهای لیست مشتریان ── #}
+    <div class="bg-white rounded-2xl border p-5 sm:p-6">
+      <h2 class="font-extrabold text-lg mb-1">کنار نام مشتری در لیست مشتریان</h2>
+      <p class="text-xs text-slate-400 mb-4">اطلاعاتی که می‌خواهید کنار نام هر مشتری در لیست نمایش داده شود.</p>
+      <div class="grid sm:grid-cols-2 gap-2">
+        {% for value, label in form.customer_list_fields.field.choices %}
+        <label class="flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer hover:bg-slate-50
+                      {% if value in form.customer_list_fields.value %}border-brand-blue-300 bg-brand-blue-50/50{% else %}border-slate-200{% endif %}">
+          <input type="checkbox" name="customer_list_fields" value="{{ value }}"
+                 class="h-4 w-4 rounded border-slate-300 text-brand-blue-600 focus:ring-brand-blue-500"
+                 {% if value in form.customer_list_fields.value %}checked{% endif %}>
+          <span class="text-sm font-medium">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-3">
+      {% if not first_time %}
+      <a href="{% url 'crm:dashboard' %}" class="rounded-xl border px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">انصراف</a>
+      {% endif %}
+      <button type="submit" class="rounded-xl bg-brand-blue-600 hover:bg-brand-blue-700 text-white px-6 py-2.5 text-sm font-bold shadow-sm">
+        {% if first_time %}ذخیره و ورود به داشبورد{% else %}ذخیره تنظیمات{% endif %}
+      </button>
+    </div>
+  </form>
+</section>
+
+<script>
+(function () {
+  // highlight selected theme cards on change
+  document.querySelectorAll('input[name="theme"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      document.querySelectorAll('.theme-card').forEach(function (c) {
+        c.classList.remove('border-brand-blue-600', 'ring-2', 'ring-brand-blue-200');
+        c.classList.add('border-slate-200');
+      });
+      var card = r.closest('.theme-card');
+      if (card) {
+        card.classList.add('border-brand-blue-600', 'ring-2', 'ring-brand-blue-200');
+        card.classList.remove('border-slate-200');
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

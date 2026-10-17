@@ -54,13 +54,42 @@
       <a href="{% url 'crm:customer_detail' c.pk %}" class="flex items-center justify-between gap-3 bg-white rounded-xl border px-4 py-3 hover:border-brand-blue-400">
         <div class="flex items-center gap-3 min-w-0">
           <div class="h-10 w-10 shrink-0 rounded-full bg-brand-blue-100 text-brand-blue-700 font-bold flex items-center justify-center">{{ c|initial }}</div>
-          <div class="min-w-0"><div class="font-bold truncate">{{ c }}</div>
-            <div class="text-xs text-slate-400 truncate">{{ c.full_name }} · {{ c.mobile }}</div></div>
+          <div class="min-w-0">
+            <div class="font-bold truncate">{{ c }}</div>
+            <div class="text-xs text-slate-400 truncate flex flex-wrap gap-x-1.5 gap-y-0.5">
+              {% if "company" in list_fields and c.company_name %}<span>{{ c.company_name }}</span>{% endif %}
+              {% if "mobile" in list_fields and c.mobile %}<span>{{ c.mobile }}</span>{% endif %}
+              {% if "landline" in list_fields and c.landline %}<span>{{ c.landline }}</span>{% endif %}
+              {% if "national_id" in list_fields and c.national_id %}<span>کدملی: {{ c.national_id }}</span>{% endif %}
+              {% if "activity_type" in list_fields and c.activity_type %}<span>{{ c.activity_type }}</span>{% endif %}
+              {% if "owner" in list_fields and c.owner %}<span>{{ c.owner.get_full_name|default:c.owner.username }}</span>{% endif %}
+            </div>
+            {% if "softwares" in list_fields and c.softwares.all %}
+            <div class="flex flex-wrap gap-1 mt-1">
+              {% for cs in c.softwares.all %}
+              <span class="text-[10px] rounded-md px-1.5 py-0.5
+                {% if cs.is_purchased %}bg-emerald-100 text-emerald-700
+                {% else %}bg-sky-100 text-sky-700{% endif %}">{{ cs.software.name }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
-          {% if finance and c.remaining_sum > 0 and c.total_amount > 0 %}<span class="text-xs rounded-full bg-red-100 text-red-700 px-3 py-1">بدهکار</span>{% endif %}
-          {% if c.open_tasks_count %}<span class="text-xs rounded-full bg-orange-100 text-orange-700 px-3 py-1">{{ c.open_tasks_count }} کار باز</span>{% endif %}
-          <span class="text-xs rounded-full px-3 py-1 {{ c.status|badge }}">{{ c.get_status_display }}</span>
+        <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          {% if "remaining" in list_fields and finance and c.remaining_sum > 0 and c.total_amount > 0 %}
+            <span class="text-xs rounded-full bg-red-100 text-red-700 px-3 py-1">بدهکار · {{ c.remaining_sum|floatformat:0 }}</span>
+          {% elif finance and c.remaining_sum > 0 and c.total_amount > 0 and "remaining" not in list_fields %}
+            {# اگر remaining انتخاب نشده ولی بدهکار است، نشان نده — مگر status جدا #}
+          {% endif %}
+          {% if "open_tasks" in list_fields and c.open_tasks_count %}
+            <span class="text-xs rounded-full bg-orange-100 text-orange-700 px-3 py-1">{{ c.open_tasks_count }} کار باز</span>
+          {% endif %}
+          {% if "payment_status" in list_fields %}
+            <span class="text-xs rounded-full bg-slate-100 text-slate-600 px-3 py-1">{{ c.get_payment_status_display }}</span>
+          {% endif %}
+          {% if "status" in list_fields %}
+            <span class="text-xs rounded-full px-3 py-1 {{ c.status|badge }}">{{ c.get_status_display }}</span>
+          {% endif %}
         </div>
       </a>
       {% empty %}<p class="text-slate-400">موردی پیدا نشد.</p>{% endfor %}
